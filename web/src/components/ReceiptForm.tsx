@@ -26,8 +26,19 @@ type Unit = 'months' | 'years';
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950';
 
-/** Creates a receipt, or edits the details of `receipt` (its files are managed on the detail page). */
-export function ReceiptForm({ receipt, onDone }: { receipt?: ReceiptDto; onDone: () => void }) {
+/**
+ * Creates a receipt, or edits the details of `receipt` (its files are managed on the detail page).
+ * `onDone` runs after saving and on cancel; `onSaved` only after a successful save.
+ */
+export function ReceiptForm({
+  receipt,
+  onDone,
+  onSaved,
+}: {
+  receipt?: ReceiptDto;
+  onDone: () => void;
+  onSaved?: () => void;
+}) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const create = useMutation({
@@ -110,6 +121,7 @@ export function ReceiptForm({ receipt, onDone }: { receipt?: ReceiptDto; onDone:
           },
         });
       }
+      onSaved?.();
       onDone();
     },
   });

@@ -81,7 +81,8 @@ function ReceiptsPage() {
             </Link>
           ))}
         </nav>
-        {!adding && tab !== 'trash' && (
+        {/* On every tab: hiding it on one would shift the tabs on phones, where it has its own line. */}
+        {!adding && (
           <button
             type="button"
             onClick={() => setAdding(true)}
@@ -92,7 +93,15 @@ function ReceiptsPage() {
         )}
       </div>
 
-      {adding && <ReceiptForm onDone={() => setAdding(false)} />}
+      {adding && (
+        <ReceiptForm
+          onDone={() => setAdding(false)}
+          // New receipts are active: show them, wherever adding started.
+          onSaved={() =>
+            tab !== 'active' && void navigate({ search: prev => ({ ...prev, archived: undefined, trash: undefined }) })
+          }
+        />
+      )}
 
       {shown.length === 0 ? (
         <p className="py-12 text-center text-slate-500 dark:text-slate-400">{t(emptyText[tab])}</p>
