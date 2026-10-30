@@ -25,6 +25,7 @@ Prerequisites: .NET SDK 10, Bun 1.4, Docker.
 ```sh
 dotnet tool restore
 dotnet run --project src/Kuitit.AppHost
+aspire stop --apphost src/Kuitit.AppHost   # from another terminal; stops the API, Vite and the mock IdP cleanly
 ```
 
 Open http://localhost:5173 (the `web` resource). The mock IdP login accepts any username (it becomes `sub`);
