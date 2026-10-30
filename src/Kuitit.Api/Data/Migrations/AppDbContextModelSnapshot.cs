@@ -90,6 +90,9 @@ namespace Kuitit.Api.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("ReceiptId")
                         .HasColumnType("TEXT");
 

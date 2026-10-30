@@ -18,5 +18,8 @@ public sealed class ReceiptFile
 
     public long SizeBytes { get; init; }
 
+    /// <summary>Upload order within the receipt. (v7 ids only order by millisecond.)</summary>
+    public int Position { get; init; }
+
     public DateTimeOffset CreatedAt { get; init; }
 }

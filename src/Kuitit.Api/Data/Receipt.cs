@@ -27,7 +27,7 @@ public sealed class Receipt
 
     public DateTimeOffset? ArchivedAt { get; set; }
 
-    /// <summary>At least one; in upload order (ids are time-ordered v7 GUIDs).</summary>
+    /// <summary>At least one; see <see cref="ReceiptFile.Position"/> for the order.</summary>
     public List<ReceiptFile> Files { get; init; } = [];
 
     public void SetWarranty(DateOnly purchasedOn, int warrantyMonths)

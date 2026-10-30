@@ -38,6 +38,7 @@ internal static class SampleReceipts
             ContentType = contentType,
             StorageKey = $"{id:N}{Path.GetExtension(fileName)}",
             SizeBytes = content.Length,
+            Position = receipt.Files.Count,
             CreatedAt = now,
         };
         using var stream = new MemoryStream(content);

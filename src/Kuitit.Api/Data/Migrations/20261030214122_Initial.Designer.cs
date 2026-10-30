@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kuitit.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261030213540_Initial")]
+    [Migration("20261030214122_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -92,6 +92,9 @@ namespace Kuitit.Api.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("ReceiptId")
                         .HasColumnType("TEXT");

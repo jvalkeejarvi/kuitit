@@ -327,6 +327,7 @@ internal static class ReceiptEndpoints
     )
     {
         var written = new List<string>();
+        var position = receipt.Files.Count == 0 ? 0 : receipt.Files.Max(f => f.Position) + 1;
         try
         {
             foreach (var upload in uploads)
@@ -340,6 +341,7 @@ internal static class ReceiptEndpoints
                     ContentType = upload.Type.ContentType,
                     StorageKey = $"{id:N}{upload.Type.Extension}",
                     SizeBytes = upload.File.Length,
+                    Position = position++,
                     CreatedAt = now,
                 };
                 await using (var stream = upload.File.OpenReadStream())

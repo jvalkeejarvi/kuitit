@@ -43,6 +43,7 @@ namespace Kuitit.Api.Data.Migrations
                     ContentType = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     StorageKey = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     SizeBytes = table.Column<long>(type: "INTEGER", nullable: false),
+                    Position = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>

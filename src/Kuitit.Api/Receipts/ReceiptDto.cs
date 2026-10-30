@@ -24,7 +24,7 @@ public sealed record ReceiptDto(
             r.PurchasedOn,
             r.WarrantyMonths,
             r.ExpiresOn,
-            [.. r.Files.OrderBy(f => f.Id).Select(ReceiptFileDto.From)],
+            [.. r.Files.OrderBy(f => f.Position).Select(ReceiptFileDto.From)],
             r.CreatedAt,
             r.ArchivedAt
         );
