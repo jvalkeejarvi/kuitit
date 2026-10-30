@@ -24,8 +24,11 @@ public sealed class AuthOptions
 
     public bool IsAllowed(UserIdentity user) =>
         AllowedUsers.Any(a =>
-            a == "*"
-            || string.Equals(a, user.Email, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(a, user.Subject, StringComparison.Ordinal)
+            !string.IsNullOrWhiteSpace(a)
+            && (
+                a == "*"
+                || string.Equals(a, user.Email, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(a, user.Subject, StringComparison.Ordinal)
+            )
         );
 }

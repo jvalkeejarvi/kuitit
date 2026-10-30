@@ -12,6 +12,14 @@ public sealed class AuthRulesTests
         new AuthOptions().IsAllowed(_user).Should().BeFalse();
     }
 
+    [Fact]
+    public void Blank_entries_never_match_a_user_without_email()
+    {
+        var noEmail = _user with { Email = "" };
+
+        new AuthOptions { AllowedUsers = ["", " "] }.IsAllowed(noEmail).Should().BeFalse();
+    }
+
     [Theory]
     [InlineData("alice@example.com", true)]
     [InlineData("sub-1", true)]
