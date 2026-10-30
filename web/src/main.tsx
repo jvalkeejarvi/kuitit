@@ -10,7 +10,7 @@ import { routeTree } from './routeTree.gen';
 configureApiClient();
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+  defaultOptions: { queries: { staleTime: 30_000, retry: false }, mutations: { retry: false } },
 });
 
 const router = createRouter({
