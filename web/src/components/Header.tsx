@@ -47,15 +47,16 @@ export function Header({ user }: { user: string | undefined }) {
         </button>
         <div
           id="header-menu"
-          className={`${open ? 'flex' : 'hidden'} absolute inset-x-0 top-full z-40 flex-col items-start gap-4 border-b border-slate-200 bg-white px-4 py-4 shadow-md sm:static sm:flex sm:flex-row sm:items-center sm:gap-3 sm:border-0 sm:p-0 sm:shadow-none dark:border-slate-800 dark:bg-slate-900`}
+          // Phones: a two-column grid (label | control); the row wrappers are display:contents there.
+          className={`${open ? 'grid' : 'hidden'} absolute inset-x-0 top-full z-40 grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 border-b border-slate-200 bg-white px-4 py-4 shadow-md sm:static sm:flex sm:items-center sm:gap-3 sm:border-0 sm:p-0 sm:shadow-none dark:border-slate-800 dark:bg-slate-900`}
         >
-          <div className="flex items-center gap-2">
+          <div className="contents sm:flex sm:items-center">
             <label className="text-sm sm:sr-only" htmlFor="language">
               {t('language.label')}
             </label>
             <select
               id="language"
-              className={selectClass}
+              className={`${selectClass} justify-self-start`}
               value={i18n.resolvedLanguage}
               onChange={e => void i18n.changeLanguage(e.target.value as Language)}
             >
@@ -66,12 +67,17 @@ export function Header({ user }: { user: string | undefined }) {
               ))}
             </select>
           </div>
-          <ThemeToggle withLabel />
+          <div className="contents sm:flex sm:items-center">
+            <span className="text-sm sm:hidden" aria-hidden>
+              {t('theme.label')}
+            </span>
+            <ThemeToggle withLabel />
+          </div>
           {user !== undefined && (
             <form
               method="post"
               action="/auth/logout"
-              className="flex w-full items-center gap-2 border-t border-slate-200 pt-4 sm:w-auto sm:border-0 sm:pt-0 dark:border-slate-800"
+              className="col-span-2 flex items-center gap-2 border-t border-slate-200 pt-3 sm:border-0 sm:pt-0 dark:border-slate-800"
             >
               {user && <span className="text-sm text-slate-600 dark:text-slate-400">{user}</span>}
               <button

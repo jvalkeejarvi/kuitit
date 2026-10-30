@@ -117,6 +117,7 @@
     }
   },
   "theme": {
+    "label": "Teema",
     "system": "Järjestelmä",
     "light": "Vaalea",
     "dark": "Tumma",

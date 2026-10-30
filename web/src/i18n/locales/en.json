@@ -117,6 +117,7 @@
     }
   },
   "theme": {
+    "label": "Theme",
     "system": "System",
     "light": "Light",
     "dark": "Dark",
