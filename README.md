@@ -87,27 +87,35 @@ Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
 ### Install
 
 1. **Package Center**: install **Container Manager** and **SSO Server**.
-2. **Folders** (File Station): in the `docker` shared folder (created by Container Manager) create `kuitit`, and
-   inside it `data`. Pick the DSM user the app runs as (a dedicated user with read/write only on
-   `docker/kuitit` is safest) and get its UID and GID over SSH: `id <user>`.
-3. **Certificate** (Control Panel > Security > Certificate): add a Let's Encrypt certificate for
+2. **App user** (Control Panel > User): create a dedicated DSM user for the app (no admin rights, no other
+   folder access). Get its UID and GID over SSH: `id <user>`.
+3. **Data folder** (Control Panel > Shared Folder > Create): name `kuitit`, tick **Encrypt this shared folder**,
+   and in the encryption step choose to mount it automatically at startup via Key Manager (store the
+   exported key somewhere safe outside the NAS). Permissions: read/write for the app user, administrators only
+   otherwise. Inside it create `data` (File Station). Receipts and the database live here, encrypted at rest.
+4. **Project folder** (File Station): in the `docker` shared folder (created by Container Manager) create
+   `kuitit`. It holds only `compose.yaml` and `.env`.
+5. **Certificate** (Control Panel > Security > Certificate): add a Let's Encrypt certificate for
    `kuitit.example.com`, or use an existing wildcard one.
-4. **Reverse proxy** (Control Panel > Login Portal > Advanced > Reverse Proxy > Create):
+6. **Reverse proxy** (Control Panel > Login Portal > Advanced > Reverse Proxy > Create):
    - Source: HTTPS, `kuitit.example.com`, port 443. Destination: HTTP, `localhost`, port 8080.
    - Custom Header: Create > WebSocket, then add `X-Forwarded-Proto` = `$scheme`.
    - Back in Certificate > Settings, assign the certificate to this proxy entry.
    - Uploads are up to 20 MB; if they fail with 413, raise the proxy body size.
-5. **SSO Server**:
+7. **SSO Server**:
    - General Settings: set the server URL (HTTPS).
    - Service: enable OIDC.
    - Application List > Add: redirect URI `https://kuitit.example.com/signin-oidc`, post-logout redirect URI
      `https://kuitit.example.com/signout-callback-oidc`. Copy the client ID, client secret and well-known URL.
-6. **Files**: from the latest GitHub release download `compose.yaml` and `env.example`. Save `env.example` as
+8. **Files**: from the latest GitHub release download `compose.yaml` and `env.example`. Save `env.example` as
    `.env`, fill in the required values (authority = well-known URL without `/.well-known/openid-configuration`,
    client ID and secret, UID and GID from step 2) and upload both files to `docker/kuitit`.
-7. **Container Manager** > Project > Create: name `kuitit`, path `docker/kuitit`, use the existing compose
+9. **Container Manager** > Project > Create: name `kuitit`, path `docker/kuitit`, use the existing compose
    file, no web portal. It pulls the image and starts the container.
-8. Open `https://kuitit.example.com` and sign in with your DSM account.
+10. Open `https://kuitit.example.com` and sign in with your DSM account.
+
+If the encrypted folder is ever not mounted (e.g. you unlock it by hand after a reboot), restart the project
+after unlocking, so the container sees the real folder.
 
 ### Update
 
@@ -131,14 +139,16 @@ the redirect URI registered in SSO Server.
 
 ### Backups
 
-Nightly Task Scheduler job (consistent copy of the live database), then Hyper Backup of `docker/kuitit`:
+Nightly Task Scheduler job (consistent copy of the live database), then Hyper Backup of the `kuitit` shared
+folder with backup encryption on, so copies off the NAS stay encrypted too:
 
 ```sh
-mkdir -p /volume1/docker/kuitit/backup
-sqlite3 /volume1/docker/kuitit/data/app.db ".backup '/volume1/docker/kuitit/backup/app.db'"
+mkdir -p /volume1/kuitit/backup
+sqlite3 /volume1/kuitit/data/app.db ".backup '/volume1/kuitit/backup/app.db'"
 ```
 
-(or a Btrfs snapshot of the `docker` shared folder).
+(or a Btrfs snapshot of the `kuitit` shared folder). Back up `docker/kuitit/.env` separately; it holds the
+client secret.
 
 ## Releasing
 

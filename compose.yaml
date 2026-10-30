@@ -26,8 +26,8 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      # A subfolder, so the app can't read .env next to this file.
-      - ${KUITIT_DATA_DIR:-/volume1/docker/kuitit/data}:/data
+      # The encrypted `kuitit` shared folder (README > Deployment), apart from this file and .env.
+      - ${KUITIT_DATA_DIR:-/volume1/kuitit/data}:/data
     environment:
       Auth__Authority: ${OIDC_AUTHORITY:?set OIDC_AUTHORITY in .env}
       Auth__ClientId: ${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID in .env}
