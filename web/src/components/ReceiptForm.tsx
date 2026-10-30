@@ -28,7 +28,7 @@ const inputClass =
 
 /**
  * Creates a receipt, or edits the details of `receipt` (its files are managed on the detail page).
- * `onDone` runs after saving and on cancel; `onSaved` only after a successful save.
+ * `onDone` runs on cancel, and after saving unless `onSaved` is given (which then gets the saved receipt).
  */
 export function ReceiptForm({
   receipt,
@@ -37,7 +37,7 @@ export function ReceiptForm({
 }: {
   receipt?: ReceiptDto;
   onDone: () => void;
-  onSaved?: () => void;
+  onSaved?: (receipt: ReceiptDto) => void;
 }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -106,13 +106,14 @@ export function ReceiptForm({
         purchasedOn: value.purchasedOn,
         warrantyMonths: toMonths(value.warrantyAmount, value.warrantyUnit),
       };
+      let saved: ReceiptDto;
       if (editing) {
-        await update.mutateAsync({
+        saved = await update.mutateAsync({
           path: { id: receipt.id },
           body: { ...details, store: value.store.trim() || null, description: value.description.trim() || null },
         });
       } else {
-        await create.mutateAsync({
+        saved = await create.mutateAsync({
           body: {
             ...details,
             store: value.store.trim() || undefined,
@@ -121,8 +122,8 @@ export function ReceiptForm({
           },
         });
       }
-      onSaved?.();
-      onDone();
+      if (onSaved) onSaved(saved);
+      else onDone();
     },
   });
 

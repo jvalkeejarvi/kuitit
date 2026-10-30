@@ -84,10 +84,8 @@ function ReceiptsPage() {
       {search.add && (
         <ReceiptForm
           onDone={() => void navigate({ search: prev => ({ ...prev, add: undefined }) })}
-          // New receipts are active: show them, wherever adding started.
-          onSaved={() =>
-            void navigate({ search: prev => ({ ...prev, add: undefined, archived: undefined, trash: undefined }) })
-          }
+          // Open the new receipt, to check it and add more files.
+          onSaved={receipt => void navigate({ to: '/receipts/$id', params: { id: receipt.id } })}
         />
       )}
 

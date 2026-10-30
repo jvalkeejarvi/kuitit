@@ -15,11 +15,11 @@ vi.mock('@/api/client/sdk.gen', async importOriginal => ({
   updateReceipt: vi.fn(),
 }));
 
-function renderForm(onDone = vi.fn(), receipt?: ReceiptDto) {
+function renderForm(onDone = vi.fn(), receipt?: ReceiptDto, onSaved?: (r: ReceiptDto) => void) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <ReceiptForm receipt={receipt} onDone={onDone} />
+      <ReceiptForm receipt={receipt} onDone={onDone} onSaved={onSaved} />
     </QueryClientProvider>,
   );
   return onDone;
@@ -179,5 +179,22 @@ describe('ReceiptForm', () => {
       path: { id: 'r1' },
       body: { name: 'TV', store: null, description: 'OLED', purchasedOn: '2025-12-30', warrantyMonths: 60 },
     });
+  });
+
+  it('hands the created receipt to onSaved instead of closing', async () => {
+    const created = { id: 'new-id', name: 'Laptop' } as ReceiptDto;
+    vi.mocked(createReceipt).mockResolvedValue({ data: created } as never);
+    const onSaved = vi.fn();
+    const onDone = renderForm(vi.fn(), undefined, onSaved);
+
+    await userEvent.type(screen.getByLabelText('Name'), 'Laptop');
+    await userEvent.upload(
+      screen.getByLabelText('Choose files'),
+      new File(['x'], 'r.pdf', { type: 'application/pdf' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await vi.waitFor(() => expect(onSaved).toHaveBeenCalledWith(created));
+    expect(onDone).not.toHaveBeenCalled();
   });
 });
