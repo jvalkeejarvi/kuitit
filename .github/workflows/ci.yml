@@ -46,3 +46,19 @@ jobs:
       - run: bun run format:check
       - run: bun run build
       - run: bun run test:run
+
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: web/package.json
+      # Same publish the release image is built from; it must carry the SPA.
+      - run: dotnet publish src/Kuitit.Api -c Release -o publish
+      - name: Published app includes the SPA
+        run: test -f publish/wwwroot/index.html && ls publish/wwwroot/assets | grep -q '\.js$'

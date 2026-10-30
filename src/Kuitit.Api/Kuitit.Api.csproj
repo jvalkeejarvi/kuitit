@@ -42,8 +42,9 @@
     <ContainerLabel Include="org.opencontainers.image.source" Value="https://github.com/jvalkeejarvi/kuitit" />
   </ItemGroup>
 
-  <!-- The SPA is built once before publishing (multi-RID container publishes run Publish per RID in parallel,
-       hence the up-to-date check) and served from wwwroot. SkipWebBuild=true publishes the API alone. -->
+  <!-- The SPA is built while publish collects its files (up-to-date check skips rebuilds) and is served from
+       wwwroot. Hooking Publish itself is too late: the file list is computed in its dependencies.
+       SkipWebBuild=true publishes the API alone. -->
   <PropertyGroup>
     <WebRoot>$(MSBuildProjectDirectory)/../../web/</WebRoot>
   </PropertyGroup>
@@ -55,7 +56,6 @@
 
   <Target
     Name="BuildWeb"
-    BeforeTargets="PublishContainer;Publish"
     Condition="'$(SkipWebBuild)' != 'true'"
     Inputs="@(WebBuildInput)"
     Outputs="$(WebRoot)dist/index.html"
@@ -64,7 +64,16 @@
     <Exec Command="bun run build" WorkingDirectory="$(WebRoot)" />
   </Target>
 
-  <Target Name="IncludeWeb" AfterTargets="ComputeFilesToPublish" Condition="'$(SkipWebBuild)' != 'true'">
+  <Target
+    Name="IncludeWeb"
+    AfterTargets="ComputeFilesToPublish"
+    DependsOnTargets="BuildWeb"
+    Condition="'$(SkipWebBuild)' != 'true'"
+  >
+    <Error
+      Condition="!Exists('$(WebRoot)dist/index.html')"
+      Text="SPA build output missing: $(WebRoot)dist/index.html. A published image would serve no UI."
+    />
     <ItemGroup>
       <WebDistFile Include="$(WebRoot)dist/**" />
       <ResolvedFileToPublish Include="@(WebDistFile->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
