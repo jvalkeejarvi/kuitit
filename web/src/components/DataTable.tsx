@@ -9,6 +9,10 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
  * --header-h + --toolbar-h, set by useCssHeightVar). Columns hidden per screen size must therefore be removed
  * through the table's column visibility, not CSS, so first/last really are the edge cells.
  *
+ * Header cells paint in two layers behind their content: ::before, a square in the page colour, fills the corners
+ * outside the rounded top edge (otherwise rows scrolling under a stuck header show through there); ::after is the
+ * visible header (background, borders, rounded corners). `relative z-0` / `sticky z-10` keeps both inside the cell.
+ *
  * Cells don't wrap, so on phones the table scrolls sideways inside its wrapper; from sm up the wrapper doesn't
  * scroll (a scroll box would break sticky).
  */
@@ -34,7 +38,7 @@ export function DataTable<Row>({
                   <th
                     key={header.id}
                     aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                    className={`border-y border-slate-200 bg-white px-2 py-2 font-medium first:rounded-tl-lg first:border-l last:rounded-tr-lg last:border-r sm:sticky sm:top-[calc(var(--header-h,0px)+var(--toolbar-h,0px))] sm:z-10 sm:px-4 dark:border-slate-800 dark:bg-slate-900 ${columnClass[header.id] ?? ''}`}
+                    className={`relative z-0 px-2 py-2 font-medium before:absolute before:inset-0 before:-z-20 before:bg-slate-50 after:absolute after:inset-0 after:-z-10 after:border-y after:border-slate-200 after:bg-white first:after:rounded-tl-lg first:after:border-l last:after:rounded-tr-lg last:after:border-r sm:sticky sm:top-[calc(var(--header-h,0px)+var(--toolbar-h,0px))] sm:z-10 sm:px-4 dark:before:bg-slate-950 dark:after:border-slate-800 dark:after:bg-slate-900 ${columnClass[header.id] ?? ''}`}
                   >
                     {header.column.getCanSort() ? (
                       <button
