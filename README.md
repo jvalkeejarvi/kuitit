@@ -73,6 +73,13 @@ docker compose -f compose.local.yaml up          # http://localhost:8080
 
 Use `--arch x64` on Intel. Data goes to `./.data/local-image`. Stop Aspire first; both use port 8090 for the IdP.
 
+Sample receipts for user `dev` (then restart the container: SQLite can't share its WAL across the Docker VM):
+
+```sh
+DATA_DIR=.data/local-image Auth__Authority=http://localhost:8090/default dotnet run --project tools/Kuitit.DevSeed
+docker compose -f compose.local.yaml restart kuitit
+```
+
 ## Deployment (Synology DSM 7)
 
 Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
