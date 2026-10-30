@@ -35,4 +35,13 @@ public sealed record ReceiptFileDto(Guid Id, string FileName, string ContentType
     public static ReceiptFileDto From(ReceiptFile f) => new(f.Id, f.FileName, f.ContentType, f.SizeBytes);
 }
 
+/// <summary>Everything editable after creation; files are managed through their own endpoints.</summary>
+public sealed record UpdateReceiptRequest(
+    string Name,
+    string? Store,
+    string? Description,
+    DateOnly PurchasedOn,
+    int WarrantyMonths
+);
+
 public sealed record MeDto(string Email, string? Name);

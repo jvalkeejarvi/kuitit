@@ -20,6 +20,7 @@ internal static class ReceiptEndpoints
         receipts.MapGet("/", ListAsync).WithName("ListReceipts");
         receipts.MapPost("/", CreateAsync).WithName("CreateReceipt").DisableAntiforgery();
         receipts.MapGet("/{id:guid}", GetAsync).WithName("GetReceipt");
+        receipts.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateReceipt");
         receipts.MapPost("/{id:guid}/files", AddFilesAsync).WithName("AddReceiptFiles").DisableAntiforgery();
         receipts.MapGet("/{id:guid}/files/{fileId:guid}", GetFileAsync).WithName("GetReceiptFile");
         receipts.MapDelete("/{id:guid}/files/{fileId:guid}", DeleteFileAsync).WithName("DeleteReceiptFile");
@@ -69,42 +70,7 @@ internal static class ReceiptEndpoints
     )
     {
         var errors = new Dictionary<string, string[]>();
-        name = name.Trim();
-        if (name.Length == 0)
-        {
-            errors["name"] = ["Name is required."];
-        }
-        else if (name.Length > ReceiptRules.MaxNameLength)
-        {
-            errors["name"] = [$"Name must be at most {ReceiptRules.MaxNameLength} characters."];
-        }
-
-        store = NullIfBlank(store);
-        if (store?.Length > ReceiptRules.MaxStoreLength)
-        {
-            errors["store"] = [$"Store must be at most {ReceiptRules.MaxStoreLength} characters."];
-        }
-
-        description = NullIfBlank(description);
-        if (description?.Length > ReceiptRules.MaxDescriptionLength)
-        {
-            errors["description"] = [$"Description must be at most {ReceiptRules.MaxDescriptionLength} characters."];
-        }
-
-        // A day of slack: the client's local date can be ahead of UTC.
-        if (purchasedOn > DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime).AddDays(1))
-        {
-            errors["purchasedOn"] = ["Purchase date can't be in the future."];
-        }
-
-        if (warrantyMonths is < ReceiptRules.MinWarrantyMonths or > ReceiptRules.MaxWarrantyMonths)
-        {
-            errors["warrantyMonths"] =
-            [
-                $"Warranty must be {ReceiptRules.MinWarrantyMonths}-{ReceiptRules.MaxWarrantyMonths} months.",
-            ];
-        }
-
+        var details = ValidateDetails(name, store, description, purchasedOn, warrantyMonths, time, errors);
         var uploads = await ValidateFilesAsync(files, existingCount: 0, errors, ct);
         if (errors.Count > 0)
         {
@@ -119,9 +85,9 @@ internal static class ReceiptEndpoints
             OwnerIssuer = user.Issuer,
             OwnerSub = user.Subject,
             OwnerEmail = user.Email,
-            Name = name,
-            Store = store,
-            Description = description,
+            Name = details.Name,
+            Store = details.Store,
+            Description = details.Description,
             CreatedAt = now,
         };
         receipt.SetWarranty(purchasedOn, warrantyMonths);
@@ -139,6 +105,43 @@ internal static class ReceiptEndpoints
     {
         var receipt = await db.Receipts.Include(r => r.Files).AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
         return receipt is null ? TypedResults.NotFound() : TypedResults.Ok(ReceiptDto.From(receipt));
+    }
+
+    private static async Task<Results<Ok<ReceiptDto>, NotFound, ValidationProblem>> UpdateAsync(
+        Guid id,
+        UpdateReceiptRequest request,
+        AppDbContext db,
+        TimeProvider time,
+        CancellationToken ct
+    )
+    {
+        var receipt = await db.Receipts.Include(r => r.Files).FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (receipt is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var errors = new Dictionary<string, string[]>();
+        var details = ValidateDetails(
+            request.Name,
+            request.Store,
+            request.Description,
+            request.PurchasedOn,
+            request.WarrantyMonths,
+            time,
+            errors
+        );
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        receipt.Name = details.Name;
+        receipt.Store = details.Store;
+        receipt.Description = details.Description;
+        receipt.SetWarranty(request.PurchasedOn, request.WarrantyMonths);
+        await db.SaveChangesAsync(ct);
+        return TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
     private static async Task<Results<Ok<ReceiptDto>, NotFound, ValidationProblem>> AddFilesAsync(
@@ -262,6 +265,58 @@ internal static class ReceiptEndpoints
         }
 
         return TypedResults.NoContent();
+    }
+
+    private sealed record Details(string Name, string? Store, string? Description);
+
+    /// <summary>Rules shared by create and update; trims, and adds problems to <paramref name="errors"/>.</summary>
+    private static Details ValidateDetails(
+        string name,
+        string? store,
+        string? description,
+        DateOnly purchasedOn,
+        int warrantyMonths,
+        TimeProvider time,
+        Dictionary<string, string[]> errors
+    )
+    {
+        name = name.Trim();
+        if (name.Length == 0)
+        {
+            errors["name"] = ["Name is required."];
+        }
+        else if (name.Length > ReceiptRules.MaxNameLength)
+        {
+            errors["name"] = [$"Name must be at most {ReceiptRules.MaxNameLength} characters."];
+        }
+
+        store = NullIfBlank(store);
+        if (store?.Length > ReceiptRules.MaxStoreLength)
+        {
+            errors["store"] = [$"Store must be at most {ReceiptRules.MaxStoreLength} characters."];
+        }
+
+        description = NullIfBlank(description);
+        if (description?.Length > ReceiptRules.MaxDescriptionLength)
+        {
+            errors["description"] = [$"Description must be at most {ReceiptRules.MaxDescriptionLength} characters."];
+        }
+
+        // A day of slack: the client's local date can be ahead of UTC.
+        if (purchasedOn > DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime).AddDays(1))
+        {
+            errors["purchasedOn"] = ["Purchase date can't be in the future."];
+        }
+
+        if (warrantyMonths is < ReceiptRules.MinWarrantyMonths or > ReceiptRules.MaxWarrantyMonths)
+        {
+            errors["warrantyMonths"] =
+            [
+                $"Warranty must be {ReceiptRules.MinWarrantyMonths}-{ReceiptRules.MaxWarrantyMonths} months.",
+            ];
+        }
+
+        return new Details(name, store, description);
     }
 
     private sealed record Upload(IFormFile File, DetectedFileType Type);

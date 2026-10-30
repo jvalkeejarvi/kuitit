@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addReceiptFiles, archiveReceipt, createReceipt, deleteReceipt, deleteReceiptFile, getMe, getReceipt, getReceiptFile, listReceipts, type Options, unarchiveReceipt } from '../sdk.gen';
-import type { AddReceiptFilesData, AddReceiptFilesError, AddReceiptFilesResponse, ArchiveReceiptData, ArchiveReceiptResponse, CreateReceiptData, CreateReceiptError, CreateReceiptResponse, DeleteReceiptData, DeleteReceiptFileData, DeleteReceiptFileError, DeleteReceiptFileResponse, DeleteReceiptResponse, GetMeData, GetMeResponse, GetReceiptData, GetReceiptFileData, GetReceiptResponse, ListReceiptsData, ListReceiptsResponse, UnarchiveReceiptData, UnarchiveReceiptResponse } from '../types.gen';
+import { addReceiptFiles, archiveReceipt, createReceipt, deleteReceipt, deleteReceiptFile, getMe, getReceipt, getReceiptFile, listReceipts, type Options, unarchiveReceipt, updateReceipt } from '../sdk.gen';
+import type { AddReceiptFilesData, AddReceiptFilesError, AddReceiptFilesResponse, ArchiveReceiptData, ArchiveReceiptResponse, CreateReceiptData, CreateReceiptError, CreateReceiptResponse, DeleteReceiptData, DeleteReceiptFileData, DeleteReceiptFileError, DeleteReceiptFileResponse, DeleteReceiptResponse, GetMeData, GetMeResponse, GetReceiptData, GetReceiptFileData, GetReceiptResponse, ListReceiptsData, ListReceiptsResponse, UnarchiveReceiptData, UnarchiveReceiptResponse, UpdateReceiptData, UpdateReceiptError, UpdateReceiptResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -146,6 +146,23 @@ export const getReceiptOptions = (options: Options<GetReceiptData>) => queryOpti
     },
     queryKey: getReceiptQueryKey(options)
 });
+
+export const updateReceiptMutationKey = (options?: Partial<Options<UpdateReceiptData>>) => createMutationKey('updateReceipt', options);
+
+export const updateReceiptMutation = (options?: Partial<Options<UpdateReceiptData>>): UseMutationOptions<UpdateReceiptResponse, UpdateReceiptError, Options<UpdateReceiptData>> => {
+    const mutationOptions: UseMutationOptions<UpdateReceiptResponse, UpdateReceiptError, Options<UpdateReceiptData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateReceipt({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: updateReceiptMutationKey(options)
+    };
+    return mutationOptions;
+};
 
 export const addReceiptFilesMutationKey = (options?: Partial<Options<AddReceiptFilesData>>) => createMutationKey('addReceiptFiles', options);
 

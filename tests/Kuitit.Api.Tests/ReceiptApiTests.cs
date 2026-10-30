@@ -360,6 +360,69 @@ public sealed class ReceiptApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Update_changes_details_and_recomputes_expiry()
+    {
+        var receipt = await CreateAsync(_alice);
+
+        var response = await _alice.PutAsJsonAsync(
+            $"/api/receipts/{receipt.Id}",
+            new UpdateReceiptRequest("  Fridge  ", " Power ", "Model X", new DateOnly(2025, 8, 31), 6),
+            Ct
+        );
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await GetAsync(_alice, receipt.Id);
+        updated.Should().BeEquivalentTo((await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!);
+        updated.Name.Should().Be("Fridge");
+        updated.Store.Should().Be("Power");
+        updated.Description.Should().Be("Model X");
+        updated.PurchasedOn.Should().Be(new DateOnly(2025, 8, 31));
+        updated.WarrantyMonths.Should().Be(6);
+        updated.ExpiresOn.Should().Be(new DateOnly(2026, 2, 28));
+        updated.Files.Should().BeEquivalentTo(receipt.Files);
+    }
+
+    [Fact]
+    public async Task Update_clears_blank_optional_fields_and_validates_like_create()
+    {
+        var created = await _alice.PostAsync("/api/receipts", TestFiles.Form(store: "Power", description: "x"), Ct);
+        var receipt = (await created.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
+
+        var cleared = await _alice.PutAsJsonAsync(
+            $"/api/receipts/{receipt.Id}",
+            new UpdateReceiptRequest("Laptop", " ", "", receipt.PurchasedOn, 24),
+            Ct
+        );
+        cleared.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await GetAsync(_alice, receipt.Id)).Should().Match<ReceiptDto>(r => r.Store == null && r.Description == null);
+
+        var invalid = await _alice.PutAsJsonAsync(
+            $"/api/receipts/{receipt.Id}",
+            new UpdateReceiptRequest("", null, null, new DateOnly(2026, 6, 20), 0),
+            Ct
+        );
+        invalid.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = (await invalid.Content.ReadFromJsonAsync<ValidationProblem>(Ct))!;
+        problem.Errors.Keys.Should().BeEquivalentTo("name", "purchasedOn", "warrantyMonths");
+        (await GetAsync(_alice, receipt.Id)).Name.Should().Be("Laptop");
+    }
+
+    [Fact]
+    public async Task Update_of_someone_elses_receipt_is_404()
+    {
+        var receipt = await CreateAsync(_alice);
+
+        var response = await _bob.PutAsJsonAsync(
+            $"/api/receipts/{receipt.Id}",
+            new UpdateReceiptRequest("Mine now", null, null, receipt.PurchasedOn, 24),
+            Ct
+        );
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await GetAsync(_alice, receipt.Id)).Name.Should().Be("Laptop");
+    }
+
+    [Fact]
     public async Task Archive_and_unarchive_move_receipts_between_lists()
     {
         var receipt = await CreateAsync(_alice);

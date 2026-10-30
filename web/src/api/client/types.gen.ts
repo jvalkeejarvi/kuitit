@@ -44,6 +44,17 @@ export type ReceiptFileDto = {
     sizeBytes: number;
 };
 
+/**
+ * Everything editable after creation; files are managed through their own endpoints.
+ */
+export type UpdateReceiptRequest = {
+    name: string;
+    store: null | string;
+    description: null | string;
+    purchasedOn: string;
+    warrantyMonths: number;
+};
+
 export type GetMeData = {
     body?: never;
     path?: never;
@@ -157,6 +168,37 @@ export type GetReceiptResponses = {
 };
 
 export type GetReceiptResponse = GetReceiptResponses[keyof GetReceiptResponses];
+
+export type UpdateReceiptData = {
+    body: UpdateReceiptRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}';
+};
+
+export type UpdateReceiptErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateReceiptError = UpdateReceiptErrors[keyof UpdateReceiptErrors];
+
+export type UpdateReceiptResponses = {
+    /**
+     * OK
+     */
+    200: ReceiptDto;
+};
+
+export type UpdateReceiptResponse = UpdateReceiptResponses[keyof UpdateReceiptResponses];
 
 export type AddReceiptFilesData = {
     body: {
