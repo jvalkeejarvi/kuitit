@@ -7,7 +7,7 @@ on:
     tags: ['v*.*.*']
 
 permissions:
-  contents: read
+  contents: write # GitHub release with the compose files
   packages: write
 
 env:
@@ -44,6 +44,18 @@ jobs:
             -p:ContainerRegistry=ghcr.io \
             -p:ContainerRepository="${IMAGE_REPOSITORY,,}" \
             -p:ContainerImageTags="\"$version;latest\""
+
+      # Install files for the NAS, with the image defaulting to this release.
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p release
+          sed "s/\${KUITIT_VERSION:-latest}/\${KUITIT_VERSION:-$version}/" compose.yaml > release/compose.yaml
+          grep -q "kuitit:\${KUITIT_VERSION:-$version}" release/compose.yaml
+          cp .env.example release/env.example
+          gh release create "$GITHUB_REF_NAME" release/compose.yaml release/env.example --generate-notes --verify-tag
 
       - name: Delete old image versions
         uses: actions/delete-package-versions@v5
