@@ -1,0 +1,78 @@
+{
+  "app": {
+    "title": "Kuitit",
+    "tagline": "Warranty receipts",
+    "loading": "Loading...",
+    "error": "Something went wrong.",
+    "retry": "Try again"
+  },
+  "auth": {
+    "logout": "Log out",
+    "deniedTitle": "Access denied",
+    "deniedBody": "Your account is not allowed to use this app.",
+    "signInAgain": "Sign in with another account"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fi": "Suomi"
+  },
+  "receipts": {
+    "active": "Active",
+    "archived": "Archived",
+    "add": "Add receipt",
+    "emptyActive": "No receipts yet. Add your first one.",
+    "emptyArchived": "No archived receipts.",
+    "name": "Name",
+    "purchasedOn": "Purchased",
+    "expiresOn": "Warranty until",
+    "file": "File",
+    "actions": "Actions",
+    "open": "Open",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "delete": "Delete",
+    "confirmDelete": "Delete permanently?",
+    "cancel": "Cancel",
+    "status": {
+      "expired": "Expired",
+      "expiringSoon": "Expires soon",
+      "valid": "Valid"
+    }
+  },
+  "form": {
+    "title": "New receipt",
+    "name": "Name",
+    "namePlaceholder": "e.g. Washing machine",
+    "purchasedOn": "Purchase date",
+    "warranty": "Warranty length",
+    "unit": "Unit",
+    "months": "months",
+    "years": "years",
+    "expiresPreview": "Warranty until {{date}}",
+    "file": "Receipt",
+    "takePhoto": "Take photo",
+    "chooseFile": "Choose file",
+    "fileHint": "PDF, JPEG, PNG or HEIC, max {{mb}} MB",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "errors": {
+      "nameRequired": "Name is required.",
+      "nameTooLong": "Name can be at most {{max}} characters.",
+      "purchasedOnRequired": "Purchase date is required.",
+      "purchasedOnFuture": "Purchase date can't be in the future.",
+      "warrantyRange": "Warranty must be between {{min}} and {{max}} months.",
+      "fileRequired": "Add a photo or file of the receipt.",
+      "fileTooLarge": "File is larger than {{mb}} MB.",
+      "fileType": "Only PDF, JPEG, PNG and HEIC files are allowed.",
+      "server": "Saving failed. Check the fields and try again."
+    }
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  }
+}

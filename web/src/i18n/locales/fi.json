@@ -1,0 +1,78 @@
+{
+  "app": {
+    "title": "Kuitit",
+    "tagline": "Takuukuitit",
+    "loading": "Ladataan...",
+    "error": "Jokin meni vikaan.",
+    "retry": "Yritä uudelleen"
+  },
+  "auth": {
+    "logout": "Kirjaudu ulos",
+    "deniedTitle": "Ei käyttöoikeutta",
+    "deniedBody": "Tililläsi ei ole oikeutta käyttää tätä sovellusta.",
+    "signInAgain": "Kirjaudu toisella tilillä"
+  },
+  "language": {
+    "label": "Kieli",
+    "en": "English",
+    "fi": "Suomi"
+  },
+  "receipts": {
+    "active": "Voimassa",
+    "archived": "Arkistoidut",
+    "add": "Lisää kuitti",
+    "emptyActive": "Ei vielä kuitteja. Lisää ensimmäinen.",
+    "emptyArchived": "Ei arkistoituja kuitteja.",
+    "name": "Nimi",
+    "purchasedOn": "Ostettu",
+    "expiresOn": "Takuu päättyy",
+    "file": "Tiedosto",
+    "actions": "Toiminnot",
+    "open": "Avaa",
+    "archive": "Arkistoi",
+    "unarchive": "Palauta",
+    "delete": "Poista",
+    "confirmDelete": "Poistetaanko pysyvästi?",
+    "cancel": "Peruuta",
+    "status": {
+      "expired": "Päättynyt",
+      "expiringSoon": "Päättymässä",
+      "valid": "Voimassa"
+    }
+  },
+  "form": {
+    "title": "Uusi kuitti",
+    "name": "Nimi",
+    "namePlaceholder": "esim. Pesukone",
+    "purchasedOn": "Ostopäivä",
+    "warranty": "Takuun pituus",
+    "unit": "Yksikkö",
+    "months": "kuukautta",
+    "years": "vuotta",
+    "expiresPreview": "Takuu päättyy {{date}}",
+    "file": "Kuitti",
+    "takePhoto": "Ota kuva",
+    "chooseFile": "Valitse tiedosto",
+    "fileHint": "PDF, JPEG, PNG tai HEIC, enintään {{mb}} Mt",
+    "save": "Tallenna",
+    "saving": "Tallennetaan...",
+    "cancel": "Peruuta",
+    "errors": {
+      "nameRequired": "Nimi on pakollinen.",
+      "nameTooLong": "Nimi voi olla enintään {{max}} merkkiä.",
+      "purchasedOnRequired": "Ostopäivä on pakollinen.",
+      "purchasedOnFuture": "Ostopäivä ei voi olla tulevaisuudessa.",
+      "warrantyRange": "Takuun on oltava {{min}}-{{max}} kuukautta.",
+      "fileRequired": "Lisää kuva tai tiedosto kuitista.",
+      "fileTooLarge": "Tiedosto on yli {{mb}} Mt.",
+      "fileType": "Vain PDF-, JPEG-, PNG- ja HEIC-tiedostot kelpaavat.",
+      "server": "Tallennus epäonnistui. Tarkista kentät ja yritä uudelleen."
+    }
+  },
+  "theme": {
+    "label": "Teema",
+    "system": "Järjestelmä",
+    "light": "Vaalea",
+    "dark": "Tumma"
+  }
+}
