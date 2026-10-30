@@ -85,17 +85,11 @@ describe('ReceiptTable', () => {
     expect(names()).toEqual(['Bike', 'Washer', 'älypuhelin']);
   });
 
-  it('sorts by purchase date and expired flag', async () => {
+  it('sorts by purchase date', async () => {
     await renderTable();
 
     await userEvent.click(screen.getByRole('button', { name: /^Ostettu/ }));
     expect(names()).toEqual(['Washer', 'Bike', 'älypuhelin']);
-
-    expect(screen.getAllByRole('img', { name: 'Päättynyt' })).toHaveLength(1);
-
-    // Ties on the flag fall back to expiry date.
-    await userEvent.click(screen.getByRole('button', { name: /^Päättynyt/ }));
-    expect(names()).toEqual(['Bike', 'älypuhelin', 'Washer']);
   });
 
   it('asks before archiving and archives only on confirm', async () => {

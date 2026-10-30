@@ -14,7 +14,8 @@ const searchSchema = z.object({
   trash: z.boolean().optional(),
   /** The add form is open (the header's + links here from any page). */
   add: z.boolean().optional(),
-  sort: z.enum(sortColumns).optional(),
+  // .catch: an unknown column (e.g. an old link) falls back to the default sort instead of an error page.
+  sort: z.enum(sortColumns).optional().catch(undefined),
   desc: z.boolean().optional(),
 });
 

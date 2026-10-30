@@ -6,14 +6,14 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Link } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, CircleX } from 'lucide-react';
+import { Archive, ArchiveRestore } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ReceiptDto } from '@/api/client/types.gen';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { confirmArchive } from '@/lib/confirmations';
-import { expiryStatus, formatDate } from '@/lib/dates';
+import { formatDate } from '@/lib/dates';
 import type { ReceiptSort, SortColumn } from '@/lib/receiptSort';
 import { useArchiveMutations } from '@/lib/receiptMutations';
 import { useDialog } from '@/lib/useDialog';
@@ -68,18 +68,6 @@ export function ReceiptTable({
             <StatusBadge expiresOn={c.getValue()} />
           </span>
         ),
-      }),
-      column.accessor(r => expiryStatus(r.expiresOn) === 'expired', {
-        id: 'expired',
-        header: () => t('receipts.expired'),
-        sortingFn: (a, b) =>
-          Number(a.getValue('expired')) - Number(b.getValue('expired')) ||
-          a.original.expiresOn.localeCompare(b.original.expiresOn),
-        // Only expired rows get a mark; an empty cell reads as "not expired".
-        cell: c =>
-          c.getValue() && (
-            <CircleX role="img" aria-label={t('receipts.expired')} className="size-5 text-red-600 dark:text-red-400" />
-          ),
       }),
       column.display({
         id: 'actions',
