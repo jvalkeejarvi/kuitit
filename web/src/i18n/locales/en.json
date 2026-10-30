@@ -117,10 +117,10 @@
     }
   },
   "theme": {
-    "label": "Theme",
     "system": "System",
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "current": "Theme: {{theme}}"
   },
   "trash": {
     "tab": "Trash",

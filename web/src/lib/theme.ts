@@ -3,6 +3,11 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 export const themes = ['system', 'light', 'dark'] as const;
 export type Theme = (typeof themes)[number];
 
+/** The toggle's order: light -> dark -> system -> light. */
+export function nextTheme(theme: Theme): Theme {
+  return theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
+}
+
 const storageKey = 'kuitit.theme';
 const media = () => window.matchMedia('(prefers-color-scheme: dark)');
 const listeners = new Set<() => void>();

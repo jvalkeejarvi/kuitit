@@ -117,10 +117,10 @@
     }
   },
   "theme": {
-    "label": "Teema",
     "system": "Järjestelmä",
     "light": "Vaalea",
-    "dark": "Tumma"
+    "dark": "Tumma",
+    "current": "Teema: {{theme}}"
   },
   "trash": {
     "tab": "Roskakori",
