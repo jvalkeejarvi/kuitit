@@ -99,6 +99,7 @@ describe('ReceiptTable', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Arkistoi: Washer' }));
     const dialog = screen.getByRole('dialog', { name: 'Arkistoidaanko kuitti?' });
+    expect(within(dialog).getByRole('button', { name: 'Peruuta' })).toHaveFocus();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Peruuta' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(archiveReceipt).not.toHaveBeenCalled();

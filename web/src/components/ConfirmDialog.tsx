@@ -22,11 +22,15 @@ export function ConfirmDialog({
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
     dialog?.showModal();
+    // After showModal, which moves focus itself; React's autoFocus would run before the dialog opens.
+    // Cancel first, so Enter never confirms by accident.
+    cancelRef.current?.focus();
     return () => dialog?.close();
   }, []);
 
@@ -51,8 +55,8 @@ export function ConfirmDialog({
       </div>
       <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3 dark:border-slate-800">
         <button
+          ref={cancelRef}
           type="button"
-          autoFocus
           onClick={() => onClose(false)}
           className="rounded-md px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
