@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "src/Kuitit.AppHost/Kuitit.AppHost.csproj"
+  }
+}

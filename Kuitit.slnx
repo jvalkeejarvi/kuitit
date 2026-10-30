@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Kuitit.Api/Kuitit.Api.csproj" />
+    <Project Path="src/Kuitit.AppHost/Kuitit.AppHost.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Kuitit.Api.Tests/Kuitit.Api.Tests.csproj" />

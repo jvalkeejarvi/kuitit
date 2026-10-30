@@ -1,0 +1,19 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>kuitit-apphost</UserSecretsId>
+    <!-- DCP and the dashboard come from the NuGet packages the SDK pins, so nobody needs the Aspire CLI to
+         build. ASPIRE010 asks for the CLI bundle, which only terminal features (WithTerminal, WithRepl) need. -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Kuitit.Api/Kuitit.Api.csproj" />
+  </ItemGroup>
+
+</Project>
