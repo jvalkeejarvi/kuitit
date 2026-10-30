@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { getMeOptions } from '@/api/client/@tanstack/react-query.gen';
 import { loginUrl } from '@/api/setup';
 import { Header } from '@/components/Header';
+import { ToastProvider } from '@/components/Toaster';
 
 const searchSchema = z.object({ authError: z.string().optional(), signedOut: z.boolean().optional() });
 
@@ -30,12 +31,14 @@ function RootLayout() {
   const { me } = Route.useRouteContext();
   const { signedOut } = Route.useSearch();
   return (
-    <div className="min-h-dvh">
-      <Header user={me ? me.email || me.name || '' : undefined} />
-      <main className="mx-auto max-w-5xl px-4 py-6">
-        {me ? <Outlet /> : signedOut ? <SignedOut /> : <AccessDenied />}
-      </main>
-    </div>
+    <ToastProvider>
+      <div className="min-h-dvh">
+        <Header user={me ? me.email || me.name || '' : undefined} />
+        <main className="mx-auto max-w-5xl px-4 py-6">
+          {me ? <Outlet /> : signedOut ? <SignedOut /> : <AccessDenied />}
+        </main>
+      </div>
+    </ToastProvider>
   );
 }
 

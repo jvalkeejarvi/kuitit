@@ -3,15 +3,17 @@ import { createMemoryHistory, createRootRoute, createRouter, RouterProvider } fr
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { archiveReceipt } from '@/api/client/sdk.gen';
+import { archiveReceipt, unarchiveReceipt } from '@/api/client/sdk.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
 import i18n from '@/i18n';
 import type { ReceiptSort } from '@/lib/receiptSort';
 import { ReceiptTable } from './ReceiptTable';
+import { ToastProvider } from './Toaster';
 
 vi.mock('@/api/client/sdk.gen', async importOriginal => ({
   ...(await importOriginal<typeof import('@/api/client/sdk.gen')>()),
   archiveReceipt: vi.fn(),
+  unarchiveReceipt: vi.fn(),
 }));
 
 const receipt = (name: string, purchasedOn: string, expiresOn: string): ReceiptDto => ({
@@ -36,7 +38,11 @@ const receipts = [
 
 function Harness() {
   const [sort, setSort] = useState<ReceiptSort>({ column: 'expiresOn', desc: false });
-  return <ReceiptTable receipts={receipts} sort={sort} onSortChange={setSort} />;
+  return (
+    <ToastProvider>
+      <ReceiptTable receipts={receipts} sort={sort} onSortChange={setSort} />
+    </ToastProvider>
+  );
 }
 
 async function renderTable() {
@@ -110,5 +116,25 @@ describe('ReceiptTable', () => {
     await vi.waitFor(() => expect(archiveReceipt).toHaveBeenCalledOnce());
     expect(vi.mocked(archiveReceipt).mock.calls[0]![0].path).toEqual({ id: 'Washer' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('offers undo after archiving', async () => {
+    vi.mocked(archiveReceipt)
+      .mockReset()
+      .mockResolvedValue({ data: receipts[0] } as never);
+    vi.mocked(unarchiveReceipt)
+      .mockReset()
+      .mockResolvedValue({ data: receipts[0] } as never);
+    await renderTable();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Arkistoi: Washer' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Arkistoi' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('"Washer" arkistoitu');
+    await userEvent.click(within(toast).getByRole('button', { name: 'Peru' }));
+    await vi.waitFor(() => expect(unarchiveReceipt).toHaveBeenCalledOnce());
+    expect(vi.mocked(unarchiveReceipt).mock.calls[0]![0].path).toEqual({ id: 'Washer' });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

@@ -9,7 +9,7 @@ import { ReceiptFiles } from '@/components/ReceiptFiles';
 import { ReceiptForm } from '@/components/ReceiptForm';
 import { StatusBadge } from '@/components/StatusBadge';
 import { confirmArchive, confirmDelete } from '@/lib/confirmations';
-import { formatDate } from '@/lib/dates';
+import { formatDate, formatTimestamp } from '@/lib/dates';
 import { useArchiveMutations, useDeleteMutation } from '@/lib/receiptMutations';
 import { useDialog } from '@/lib/useDialog';
 
@@ -158,8 +158,4 @@ function ReceiptNotFound() {
 
 function warrantyLength(months: number, t: ReturnType<typeof useTranslation>['t']): string {
   return months % 12 === 0 ? t('detail.years', { count: months / 12 }) : t('detail.months', { count: months });
-}
-
-function formatTimestamp(iso: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(iso));
 }

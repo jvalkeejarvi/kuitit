@@ -63,7 +63,7 @@
     "archiveTitle": "Arkistoidaanko kuitti?",
     "archiveBody": "\"{{name}}\" siirtyy arkistoituihin. Voit palauttaa sen myöhemmin.",
     "deleteTitle": "Poistetaanko kuitti?",
-    "deleteBody": "\"{{name}}\" ja sen tiedosto poistetaan pysyvästi. Tätä ei voi perua."
+    "deleteBody": "\"{{name}}\" siirtyy roskakoriin, jossa sitä säilytetään 30 päivää."
   },
   "files": {
     "heading_one": "{{count}} tiedosto",
@@ -77,7 +77,7 @@
     "lastFile": "Kuitilla on oltava vähintään yksi tiedosto",
     "uploading": "Lähetetään...",
     "deleteTitle": "Poistetaanko tiedosto?",
-    "deleteBody": "\"{{name}}\" poistetaan pysyvästi.",
+    "deleteBody": "\"{{name}}\" poistetaan kuitilta. Voit perua heti poiston jälkeen.",
     "errors": {
       "tooMany": "Kuitilla voi olla enintään {{max}} tiedostoa.",
       "tooLarge": "Tiedosto voi olla enintään {{mb}} Mt.",
@@ -122,5 +122,23 @@
     "system": "Järjestelmä",
     "light": "Vaalea",
     "dark": "Tumma"
+  },
+  "trash": {
+    "tab": "Roskakori",
+    "empty": "Roskakori on tyhjä.",
+    "note": "Poistetut kuitit poistetaan pysyvästi {{days}} päivän kuluttua.",
+    "deletedOn": "Poistettu {{date}}",
+    "restore": "Palauta",
+    "deletePermanently": "Poista pysyvästi",
+    "deletePermanentlyNamed": "Poista {{name}} pysyvästi",
+    "confirmTitle": "Poistetaanko pysyvästi?",
+    "confirmBody": "\"{{name}}\" ja sen tiedostot poistetaan lopullisesti. Tätä ei voi perua."
+  },
+  "toast": {
+    "undo": "Peru",
+    "close": "Sulje",
+    "archived": "\"{{name}}\" arkistoitu",
+    "deleted": "Kuitti siirretty roskakoriin",
+    "fileRemoved": "Tiedosto poistettu"
   }
 }

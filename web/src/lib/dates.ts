@@ -47,3 +47,8 @@ export function expiryStatus(expiresOn: IsoDate, now: IsoDate = today()): Expiry
   if (expiresOn <= addDays(now, EXPIRING_SOON_DAYS)) return 'expiringSoon';
   return 'valid';
 }
+
+/** A server timestamp (ISO with offset) as a local date. */
+export function formatTimestamp(iso: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(iso));
+}

@@ -36,3 +36,15 @@ export function confirmDeleteFile(openDialog: OpenDialog, fileName: string, t: T
     />
   ));
 }
+
+export function confirmDeletePermanently(openDialog: OpenDialog, name: string, t: TFunction): Promise<boolean> {
+  return openDialog<boolean>(close => (
+    <ConfirmDialog
+      variant="delete"
+      title={t('trash.confirmTitle')}
+      description={t('trash.confirmBody', { name })}
+      confirmLabel={t('trash.deletePermanently')}
+      onClose={close}
+    />
+  ));
+}

@@ -5,6 +5,8 @@ export const MAX_DESCRIPTION_LENGTH = 2000;
 export const MAX_FILE_MB = 20;
 export const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 export const MAX_FILES = 10;
+/** Deleted receipts stay in the trash this long (API purges them). */
+export const TRASH_DAYS = 30;
 export const MAX_UPLOAD_MB = 60;
 export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 export const MIN_WARRANTY_MONTHS = 1;
