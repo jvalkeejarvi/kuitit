@@ -40,11 +40,9 @@ function AccessDenied() {
     <div className="mx-auto max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
       <h1 className="text-xl font-semibold">{t('auth.deniedTitle')}</h1>
       <p className="mt-2 text-slate-600 dark:text-slate-400">{t('auth.deniedBody')}</p>
-      <form method="post" action="/auth/logout" className="mt-4">
-        <button type="submit" className="text-brand underline dark:text-teal-400">
-          {t('auth.signInAgain')}
-        </button>
-      </form>
+      <a href="/auth/login?prompt=login" className="mt-4 inline-block text-brand underline dark:text-teal-400">
+        {t('auth.signInAgain')}
+      </a>
     </div>
   );
 }

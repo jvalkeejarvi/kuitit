@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace Kuitit.Api.Tests;
 
@@ -46,6 +49,20 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services
                 .AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, HeaderAuthHandler>(HeaderAuthHandler.SchemeName, null);
+            // Static IdP metadata so challenges work without a network call. Replaces the manager the OIDC
+            // handler's own post-configure already created.
+            services.PostConfigure<OpenIdConnectOptions>(
+                OpenIdConnectDefaults.AuthenticationScheme,
+                o =>
+                    o.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(
+                        new OpenIdConnectConfiguration
+                        {
+                            Issuer = Issuer,
+                            AuthorizationEndpoint = $"{Issuer}/authorize",
+                            TokenEndpoint = $"{Issuer}/token",
+                        }
+                    )
+            );
             services.PostConfigure<AuthenticationOptions>(o =>
             {
                 o.DefaultScheme = HeaderAuthHandler.SchemeName;

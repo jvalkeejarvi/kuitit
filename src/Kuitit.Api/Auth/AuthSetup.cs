@@ -129,8 +129,16 @@ internal static class AuthSetup
         return !string.IsNullOrEmpty(config.EndSessionEndpoint);
     }
 
-    public static AuthenticationProperties LoginProperties(string? returnUrl) =>
-        new() { RedirectUri = IsLocalUrl(returnUrl) ? returnUrl : "/" };
+    public static AuthenticationProperties LoginProperties(string? returnUrl, bool forceLogin)
+    {
+        var properties = new OpenIdConnectChallengeProperties { RedirectUri = IsLocalUrl(returnUrl) ? returnUrl : "/" };
+        if (forceLogin)
+        {
+            properties.Prompt = "login";
+        }
+
+        return properties;
+    }
 
     /// <summary>Prevents open redirects: only app-relative paths.</summary>
     public static bool IsLocalUrl(string? url) =>

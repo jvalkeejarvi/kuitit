@@ -17,7 +17,10 @@ public sealed class AuthRulesTests
     {
         var noEmail = _user with { Email = "" };
 
-        new AuthOptions { AllowedUsers = ["", " "] }.IsAllowed(noEmail).Should().BeFalse();
+        new AuthOptions { AllowedUsers = ["", " "] }
+            .IsAllowed(noEmail)
+            .Should()
+            .BeFalse();
     }
 
     [Theory]

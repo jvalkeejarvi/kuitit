@@ -10,10 +10,14 @@ internal static class AuthEndpoints
     {
         var auth = app.MapGroup("/auth").ExcludeFromDescription();
 
+        // prompt=login forces the IdP to ask for credentials again (switching away from a denied account).
         auth.MapGet(
             "/login",
-            (string? returnUrl) =>
-                Results.Challenge(AuthSetup.LoginProperties(returnUrl), [OpenIdConnectDefaults.AuthenticationScheme])
+            (string? returnUrl, string? prompt) =>
+                Results.Challenge(
+                    AuthSetup.LoginProperties(returnUrl, forceLogin: prompt == "login"),
+                    [OpenIdConnectDefaults.AuthenticationScheme]
+                )
         );
 
         // A form POST (top-level navigation) so the browser can follow the redirect to the IdP's end-session page.
