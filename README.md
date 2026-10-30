@@ -82,7 +82,7 @@ docker compose -f compose.local.yaml restart kuitit
 
 ## Deployment (Synology DSM 7)
 
-Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
+Replace `kuitit.example.com` and `sso.example.com` with your host names. Takes about 15 minutes.
 
 ### Install
 
@@ -105,11 +105,17 @@ Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
    - Custom Header: Create > WebSocket, then add `X-Forwarded-Proto` = `$scheme`.
    - Back in Certificate > Settings, assign the certificate to this proxy entry.
    - Uploads are up to 20 MB; if they fail with 413, raise the proxy body size.
-7. **SSO Server**:
-   - General Settings: set the server URL (HTTPS).
-   - Service: enable OIDC.
+7. **SSO Server** (its login page is DSM's, so give it its own portal instead of exposing DSM):
+   - Control Panel > Login Portal > Applications > SSO Server > Edit: customized domain `sso.example.com`,
+     port fields empty (served on 443 like other portals). Assign the certificate to it.
+   - SSO Server > General Settings: server URL exactly `https://sso.example.com`. SSO Server only answers on
+     this URL ("unknown endpoint" elsewhere), and on another host DSM may send logins to its own port 5001.
+   - Service: enable OIDC. Check `https://sso.example.com/webman/sso/.well-known/openid-configuration`
+     returns JSON; its `issuer` is the authority for `.env`.
    - Application List > Add: redirect URI `https://kuitit.example.com/signin-oidc`, post-logout redirect URI
-     `https://kuitit.example.com/signout-callback-oidc`. Copy the client ID, client secret and well-known URL.
+     `https://kuitit.example.com/signout-callback-oidc`. Copy the client ID and client secret.
+   - The portal makes DSM's login (and its web API) reachable like any app portal: enforce 2FA for
+     administrators and turn on Auto Block. Sign in to Kuitit with a non-admin account.
 8. **Files**: from the latest GitHub release download `compose.yaml` and `env.example`. Save `env.example` as
    `.env`, fill in the required values (authority = well-known URL without `/.well-known/openid-configuration`,
    client ID and secret, UID and GID from step 2) and upload both files to `docker/kuitit`.
