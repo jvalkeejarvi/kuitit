@@ -78,6 +78,21 @@ internal static class SampleReceipts
             new("Kahvinkeitin", "Tokmanni", null, today.AddMonths(-30), 24),
             new("Polkupyörä", null, "Tunturi, runkonumero TU123456", today.AddMonths(-1), 24),
             new("Porakone", "K-Rauta", null, today.AddMonths(-40), 36, Archived: true),
+            // More of the everyday kind, so the list scrolls; spread over all expiry states.
+            new("Astianpesukone", "Gigantti", "Electrolux EEM48321L", today.AddMonths(-20), 24),
+            new("Jääkaappi", "Power", null, today.AddMonths(-14), 24),
+            new("Pölynimuri", "Verkkokauppa.com", "Dyson V15 Detect", today.AddMonths(-11).AddDays(-20), 12),
+            new("Kuulokkeet", "Clas Ohlson", null, today.AddMonths(-6), 24),
+            new("Puhelin", "Elisa", "iPhone, IMEI 356938035643809", today.AddMonths(-23).AddDays(-15), 24),
+            new("Mikroaaltouuni", "Tokmanni", null, today.AddMonths(-26), 24),
+            new("Sähköhammasharja", "Prisma", null, today.AddMonths(-2), 24),
+            new("Ruohonleikkuri", "Motonet", "Husqvarna LC 247", today.AddMonths(-17), 36),
+            new("Kahvimylly", "Stockmann", null, today.AddMonths(-9), 12, Image: true),
+            new("Talvirenkaat", "Vianor", "4 kpl, nastat", today.AddMonths(-13), 12),
+            new("Työtuoli", "IKEA", "Markus", today.AddMonths(-50), 120),
+            new("Tabletti", "Gigantti", null, today.AddMonths(-25), 24, Archived: true),
+            new("Kamera", "Rajala", "Sony a6400 + 16-50 mm", today.AddMonths(-4), 24, Image: true, ExtraPdf: true),
+            new("Sähköpotkulauta", "XXL", null, today.AddMonths(-12).AddDays(10), 12),
         ];
 
         foreach (var sample in samples)
