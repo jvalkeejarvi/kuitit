@@ -128,9 +128,9 @@ sqlite3 /volume1/docker/kuitit/data/app.db ".backup '/volume1/docker/kuitit/back
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-The Release workflow builds `ghcr.io/jvalkeejarvi/kuitit:0.1.0` (+ `latest`) for `linux/amd64` and
-`linux/arm64`, keeps the last 3 releases, and creates a GitHub release with `compose.yaml` (image pinned to
-that version) and `env.example` attached for the NAS.
+The Release workflow builds `ghcr.io/jvalkeejarvi/kuitit:0.1.0` (+ `latest`) for `linux/amd64`, keeps the last
+3 releases, and creates a GitHub release with `compose.yaml` (image pinned to that version) and `env.example`
+attached for the NAS.
 
 After the first release, make the image public once: GitHub > Packages > `kuitit` > Package settings > Change
 visibility > Public. It contains no secrets (configuration comes from `.env`), and the NAS can then pull it
@@ -140,5 +140,5 @@ There is no Dockerfile: the .NET SDK builds the image (settings in `src/Kuitit.A
 `bun run build` first to put the SPA in `wwwroot`. Build one locally into Docker with:
 
 ```sh
-dotnet publish src/Kuitit.Api -c Release -t:PublishContainer --os linux --arch arm64   # or x64
+dotnet publish src/Kuitit.Api -c Release -t:PublishContainer 
 ```

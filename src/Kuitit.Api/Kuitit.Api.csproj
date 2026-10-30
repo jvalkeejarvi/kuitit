@@ -24,11 +24,9 @@
   <PropertyGroup Label="Container">
     <ContainerRepository>kuitit</ContainerRepository>
     <ContainerFamily>noble-chiseled</ContainerFamily>
-    <!-- Synology x86 and ARM models. -->
-    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
-    <!-- Restore the per-RID assets the inner publishes need; plain builds and tests stay RID-less. -->
-    <RuntimeIdentifiers Condition="'$(_IsPublishing)' == 'true'">$(ContainerRuntimeIdentifiers)</RuntimeIdentifiers>
-    <!-- Per-RID inner publishes only; set unconditionally it would pin the host RID and skip the multi-arch path. -->
+    <!-- Synology x86 models (DS225+). For ARM too: ContainerRuntimeIdentifiers=linux-x64;linux-arm64 with
+         RuntimeIdentifiers set to the same on publish, and KEEP_VERSIONS x3 in release.yml (image index). -->
+    <RuntimeIdentifier Condition="'$(_IsPublishing)' == 'true' and '$(RuntimeIdentifier)' == ''">linux-x64</RuntimeIdentifier>
     <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
     <!-- Committed web/openapi.json is the contract; publishing doesn't regenerate it. -->
     <OpenApiGenerateDocuments Condition="'$(_IsPublishing)' == 'true'">false</OpenApiGenerateDocuments>

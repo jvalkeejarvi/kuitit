@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag like v0.1.0 to publish ghcr.io/<owner>/kuitit:0.1.0 (+ :latest) for linux/amd64 and linux/arm64.
+# Push a tag like v0.1.0 to publish ghcr.io/<owner>/kuitit:0.1.0 (+ :latest) for linux/amd64.
 # The image is built by the .NET SDK (container settings live in src/Kuitit.Api/Kuitit.Api.csproj).
 on:
   push:
@@ -12,9 +12,8 @@ permissions:
 
 env:
   IMAGE_REPOSITORY: ${{ github.repository_owner }}/kuitit
-  # Each release is 3 package versions (index + amd64 + arm64), so this keeps the last 3 releases.
   # The package is public (see README), so storage is free; retention just keeps the version list short.
-  KEEP_VERSIONS: 9
+  KEEP_VERSIONS: 3
 
 jobs:
   image:
