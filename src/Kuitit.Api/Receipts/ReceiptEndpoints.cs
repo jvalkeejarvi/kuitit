@@ -344,6 +344,7 @@ internal static class ReceiptEndpoints
         Guid id,
         AppDbContext db,
         IFileStore fileStore,
+        ILogger<TrashPurger> logger,
         CancellationToken ct
     )
     {
@@ -353,7 +354,7 @@ internal static class ReceiptEndpoints
             .FirstOrDefaultAsync(r => r.Id == id && r.DeletedAt != null, ct);
         if (receipt is not null)
         {
-            await TrashPurger.DeleteAsync([receipt], [], db, fileStore, ct);
+            await TrashPurger.DeleteAsync([receipt], [], db, fileStore, logger, ct);
         }
 
         return TypedResults.NoContent();

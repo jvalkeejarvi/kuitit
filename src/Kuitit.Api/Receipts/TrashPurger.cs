@@ -21,7 +21,7 @@ internal sealed class TrashPurger(IServiceScopeFactory scopeFactory, TimeProvide
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var files = scope.ServiceProvider.GetRequiredService<IFileStore>();
                 var cutoff = time.GetUtcNow().AddDays(-ReceiptRules.TrashDays);
-                var purged = await PurgeAsync(cutoff, db, files, stoppingToken);
+                var purged = await PurgeAsync(cutoff, db, files, logger, stoppingToken);
                 if (purged > 0 && logger.IsEnabled(LogLevel.Information))
                 {
                     logger.LogInformation("Purged {Count} items from the trash", purged);
@@ -44,6 +44,7 @@ internal sealed class TrashPurger(IServiceScopeFactory scopeFactory, TimeProvide
         DateTimeOffset cutoff,
         AppDbContext db,
         IFileStore fileStore,
+        ILogger logger,
         CancellationToken ct
     )
     {
@@ -56,16 +57,21 @@ internal sealed class TrashPurger(IServiceScopeFactory scopeFactory, TimeProvide
             .ReceiptFiles.IgnoreQueryFilters()
             .Where(f => f.DeletedAt < cutoff && !receipts.Select(r => r.Id).Contains(f.ReceiptId))
             .ToListAsync(ct);
-        await DeleteAsync(receipts, files, db, fileStore, ct);
+        await DeleteAsync(receipts, files, db, fileStore, logger, ct);
         return receipts.Count + files.Count;
     }
 
-    /// <summary>Rows first, then the stored files (a leftover blob is harmless, a row without one is not).</summary>
+    /// <summary>
+    /// Rows first, then the stored files: a leftover file is harmless (nothing points at it), a row pointing at a
+    /// missing file is not. Each file is removed on its own, so one failure doesn't leave the rest behind; it is
+    /// logged and stays on disk as an orphan.
+    /// </summary>
     public static async Task DeleteAsync(
         IReadOnlyCollection<Receipt> receipts,
         IReadOnlyCollection<ReceiptFile> files,
         AppDbContext db,
         IFileStore fileStore,
+        ILogger logger,
         CancellationToken ct
     )
     {
@@ -74,7 +80,17 @@ internal sealed class TrashPurger(IServiceScopeFactory scopeFactory, TimeProvide
         await db.SaveChangesAsync(ct);
         foreach (var key in receipts.SelectMany(r => r.Files).Concat(files).Select(f => f.StorageKey))
         {
-            await fileStore.DeleteAsync(key, ct);
+            try
+            {
+                await fileStore.DeleteAsync(key, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(ex, "Could not delete stored file {StorageKey}; it is left as an orphan", key);
+                }
+            }
         }
     }
 }

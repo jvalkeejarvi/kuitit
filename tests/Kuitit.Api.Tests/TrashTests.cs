@@ -4,6 +4,7 @@ using Kuitit.Api.Data;
 using Kuitit.Api.Files;
 using Kuitit.Api.Receipts;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Kuitit.Api.Tests;
 
@@ -148,6 +149,7 @@ public sealed class TrashTests : IAsyncLifetime
                 _factory.Time.GetUtcNow().AddDays(-ReceiptRules.TrashDays),
                 scope.ServiceProvider.GetRequiredService<AppDbContext>(),
                 scope.ServiceProvider.GetRequiredService<IFileStore>(),
+                NullLogger.Instance,
                 Ct
             );
             purged.Should().Be(2, "the old receipt and the removed file");
@@ -159,5 +161,49 @@ public sealed class TrashTests : IAsyncLifetime
             .StatusCode.Should()
             .Be(HttpStatusCode.NotFound);
         Directory.GetFiles(FilesDir).Should().HaveCount(2, "kept's remaining file and recent's file");
+    }
+
+    [Fact]
+    public async Task Purge_carries_on_when_a_stored_file_cannot_be_deleted()
+    {
+        var receipt = await CreateAsync(fileCount: 3);
+        await _alice.DeleteAsync($"/api/receipts/{receipt.Id}", Ct);
+        _factory.Time.Advance(TimeSpan.FromDays(ReceiptRules.TrashDays + 1));
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var real = scope.ServiceProvider.GetRequiredService<IFileStore>();
+        var failing = new FailingFileStore(real, failKey: $"{receipt.Files[0].Id:N}.pdf");
+        var purged = await TrashPurger.PurgeAsync(
+            _factory.Time.GetUtcNow().AddDays(-ReceiptRules.TrashDays),
+            scope.ServiceProvider.GetRequiredService<AppDbContext>(),
+            failing,
+            NullLogger.Instance,
+            Ct
+        );
+
+        purged.Should().Be(1);
+        (await ListAsync(_alice, "/api/receipts/trash")).Should().BeEmpty();
+        failing.Attempted.Should().HaveCount(3, "the failure doesn't stop the remaining files");
+        Directory.GetFiles(FilesDir).Should().ContainSingle().Which.Should().EndWith(failing.FailKey);
+    }
+
+    /// <summary>Deletes through the real store, except one key that throws.</summary>
+    private sealed class FailingFileStore(IFileStore inner, string failKey) : IFileStore
+    {
+        public string FailKey => failKey;
+
+        public List<string> Attempted { get; } = [];
+
+        public Task SaveAsync(string key, Stream content, CancellationToken cancellationToken) =>
+            inner.SaveAsync(key, content, cancellationToken);
+
+        public Task<Stream?> OpenReadAsync(string key, CancellationToken cancellationToken) =>
+            inner.OpenReadAsync(key, cancellationToken);
+
+        public Task DeleteAsync(string key, CancellationToken cancellationToken)
+        {
+            Attempted.Add(key);
+            return key == failKey ? throw new IOException("Disk says no.") : inner.DeleteAsync(key, cancellationToken);
+        }
     }
 }

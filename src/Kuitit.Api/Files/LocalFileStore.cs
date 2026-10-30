@@ -32,7 +32,13 @@ internal sealed class LocalFileStore(string root) : IFileStore
 
     public Task DeleteAsync(string key, CancellationToken cancellationToken)
     {
-        File.Delete(PathFor(key));
+        try
+        {
+            // A missing file is already a no-op; a missing folder means the same thing.
+            File.Delete(PathFor(key));
+        }
+        catch (DirectoryNotFoundException) { }
+
         return Task.CompletedTask;
     }
 
