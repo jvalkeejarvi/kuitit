@@ -91,7 +91,10 @@ Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
    folder access). Get its UID and GID over SSH: `id <user>`.
 3. **Data folder** (Control Panel > Shared Folder > Create): name `kuitit`. Permissions: read/write for the app
    user, administrators only otherwise. Inside it create `data` (File Station). Receipts and the database live
-   here. (For encryption at rest, use DSM's volume encryption for the whole NAS rather than a per-folder key.)
+   here, unencrypted at rest; DSM permissions keep other users out. (DSM can only encrypt a volume when it is
+   created, so encrypting an existing one means rebuilding it. With an encrypted volume whose key you unlock by
+   hand after boot, restart the `kuitit` project after unlocking so the container doesn't start on an empty
+   path.)
 4. **Project folder** (File Station): in the `docker` shared folder (created by Container Manager) create
    `kuitit`. It holds only `compose.yaml` and `.env`.
 5. **Certificate** (Control Panel > Security > Certificate): add a Let's Encrypt certificate for
@@ -136,7 +139,8 @@ the redirect URI registered in SSO Server.
 ### Backups
 
 Nightly Task Scheduler job (consistent copy of the live database), then Hyper Backup of the `kuitit` shared
-folder with backup encryption on, so copies off the NAS stay encrypted too:
+folder with backup encryption on, so copies that leave the NAS are encrypted. In the backup task's file filter
+exclude `data/app.db*`: the live database can be caught mid-write, and `backup/app.db` is the consistent copy.
 
 ```sh
 mkdir -p /volume1/kuitit/backup
@@ -145,6 +149,9 @@ sqlite3 /volume1/kuitit/data/app.db ".backup '/volume1/kuitit/backup/app.db'"
 
 (or a Btrfs snapshot of the `kuitit` shared folder). Back up `docker/kuitit/.env` separately; it holds the
 client secret.
+
+Restore: stop the `kuitit` project, copy `backup/app.db` over `data/app.db` (delete `data/app.db-wal` and
+`data/app.db-shm`), restore `data/files/` and `data/keys/`, then start the project.
 
 ## Releasing
 
