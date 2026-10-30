@@ -7,7 +7,7 @@ import { listReceiptsOptions, listTrashOptions } from '@/api/client/@tanstack/re
 import type { ReceiptDto } from '@/api/client/types.gen';
 import { ReceiptForm } from '@/components/ReceiptForm';
 import { ReceiptTable } from '@/components/ReceiptTable';
-import { TrashList } from '@/components/TrashList';
+import { TrashTable } from '@/components/TrashTable';
 import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
 
 const searchSchema = z.object({
@@ -106,7 +106,7 @@ function ReceiptsPage() {
       {shown.length === 0 ? (
         <p className="py-12 text-center text-slate-500 dark:text-slate-400">{t(emptyText[tab])}</p>
       ) : tab === 'trash' ? (
-        <TrashList receipts={trash} />
+        <TrashTable receipts={trash} />
       ) : (
         <ReceiptTable
           receipts={receipts}

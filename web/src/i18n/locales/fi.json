@@ -124,12 +124,12 @@
     "tab": "Roskakori",
     "empty": "Roskakori on tyhjä.",
     "note": "Poistetut kuitit poistetaan pysyvästi {{days}} päivän kuluttua.",
-    "deletedOn": "Poistettu {{date}}",
     "restore": "Palauta",
     "deletePermanently": "Poista pysyvästi",
-    "deletePermanentlyNamed": "Poista {{name}} pysyvästi",
     "confirmTitle": "Poistetaanko pysyvästi?",
-    "confirmBody": "\"{{name}}\" ja sen tiedostot poistetaan lopullisesti. Tätä ei voi perua."
+    "confirmBody": "\"{{name}}\" ja sen tiedostot poistetaan lopullisesti. Tätä ei voi perua.",
+    "deletedAt": "Poistettu",
+    "purgeOn": "Poistuu pysyvästi"
   },
   "toast": {
     "undo": "Peru",

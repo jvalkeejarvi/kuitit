@@ -1,16 +1,16 @@
 import {
   createColumnHelper,
-  flexRender,
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
   type SortingState,
 } from '@tanstack/react-table';
 import { Link } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, ArrowUpDown, CircleX } from 'lucide-react';
+import { Archive, ArchiveRestore, CircleX } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ReceiptDto } from '@/api/client/types.gen';
+import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { confirmArchive } from '@/lib/confirmations';
 import { expiryStatus, formatDate } from '@/lib/dates';
@@ -109,58 +109,8 @@ export function ReceiptTable({
     getSortedRowModel: getSortedRowModel(),
   });
 
-  return (
-    // All columns everywhere; cells don't wrap, so on narrow screens the table scrolls inside its box.
-    // `relative` keeps absolutely positioned content (the sr-only header) inside it, not widening the page.
-    <div className="relative overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <table className="w-full text-left text-sm whitespace-nowrap">
-        <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
-          {table.getHeaderGroups().map(group => (
-            <tr key={group.id}>
-              {group.headers.map(header => {
-                const sorted = header.column.getIsSorted();
-                const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
-                return (
-                  <th
-                    key={header.id}
-                    aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                    className={`px-3 py-2 font-medium sm:px-4 ${columnClass[header.id] ?? ''}`}
-                  >
-                    {header.column.getCanSort() ? (
-                      <button
-                        type="button"
-                        onClick={header.column.getToggleSortingHandler()}
-                        className="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100"
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        <SortIcon className={`size-3.5 shrink-0 ${sorted ? '' : 'opacity-40'}`} aria-hidden />
-                      </button>
-                    ) : (
-                      flexRender(header.column.columnDef.header, header.getContext())
-                    )}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id} className={`px-3 py-3 sm:px-4 ${columnClass[cell.column.id] ?? ''}`}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  return <DataTable table={table} columnClass={columnClass} />;
 }
-
-/** Phones hide some columns, so sorting there goes through this instead of the headers. */
 
 function ArchiveButton({ receipt }: { receipt: ReceiptDto }) {
   const { t } = useTranslation();

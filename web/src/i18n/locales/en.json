@@ -124,12 +124,12 @@
     "tab": "Trash",
     "empty": "The trash is empty.",
     "note": "Deleted receipts are removed permanently after {{days}} days.",
-    "deletedOn": "Deleted {{date}}",
     "restore": "Restore",
     "deletePermanently": "Delete permanently",
-    "deletePermanentlyNamed": "Delete {{name}} permanently",
     "confirmTitle": "Delete permanently?",
-    "confirmBody": "\"{{name}}\" and its files are deleted for good. This can't be undone."
+    "confirmBody": "\"{{name}}\" and its files are deleted for good. This can't be undone.",
+    "deletedAt": "Deleted",
+    "purgeOn": "Deleted for good"
   },
   "toast": {
     "undo": "Undo",
