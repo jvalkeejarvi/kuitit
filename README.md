@@ -53,6 +53,7 @@ API changes: `dotnet build` rewrites `web/openapi.json`; then `bun run client`. 
 | `Auth__ClientId` / `Auth__ClientSecret` | OIDC client |
 | `Auth__AllowedUsers__N` | Emails or subjects allowed to sign in. Empty denies everyone. |
 | `ConnectionStrings__App` | Optional DB connection string override |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional. Exports traces, metrics and logs over OTLP (set automatically by Aspire in dev). |
 
 ## Deployment (Synology DSM 7)
 

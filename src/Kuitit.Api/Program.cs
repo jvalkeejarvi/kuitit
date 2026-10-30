@@ -5,6 +5,7 @@ using Kuitit.Api.Auth;
 using Kuitit.Api.Data;
 using Kuitit.Api.Files;
 using Kuitit.Api.Receipts;
+using Kuitit.Api.Telemetry;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -40,6 +41,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.KnownProxies.Clear();
 });
 
+builder.AddAppTelemetry();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAppAuth(builder.Configuration);
 builder.Services.AddAppDatabase(builder.Configuration, migrateOnStartup: !isGeneratingOpenApi);
