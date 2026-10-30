@@ -4,6 +4,8 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 /**
  * The app's table look: bordered box, sortable headers (click to sort, again to reverse), divided rows.
  * Cells don't wrap, so on narrow screens the table scrolls inside its box rather than the page.
+ * From sm up the box doesn't scroll (a scroll box would break sticky), and the header row sticks under the top
+ * bar and toolbar (--header-h + --toolbar-h, set by useCssHeightVar).
  */
 export function DataTable<Row>({
   table,
@@ -15,7 +17,7 @@ export function DataTable<Row>({
 }) {
   return (
     // `relative` keeps absolutely positioned content (sr-only headers) inside the box, not widening the page.
-    <div className="relative overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="relative overflow-x-auto rounded-lg border border-slate-200 bg-white sm:overflow-x-visible dark:border-slate-800 dark:bg-slate-900">
       <table className="w-full text-left text-sm whitespace-nowrap">
         <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
           {table.getHeaderGroups().map(group => (
@@ -27,7 +29,7 @@ export function DataTable<Row>({
                   <th
                     key={header.id}
                     aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                    className={`px-2 py-2 font-medium sm:px-4 ${columnClass[header.id] ?? ''}`}
+                    className={`bg-white px-2 py-2 font-medium sm:sticky sm:top-[calc(var(--header-h,0px)+var(--toolbar-h,0px))] sm:z-10 sm:px-4 sm:shadow-[inset_0_-1px_0] sm:shadow-slate-200 dark:bg-slate-900 dark:sm:shadow-slate-800 ${columnClass[header.id] ?? ''}`}
                   >
                     {header.column.getCanSort() ? (
                       <button

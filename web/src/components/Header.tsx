@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languages, type Language } from '@/i18n';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useCssHeightVar } from '@/lib/useCssHeightVar';
 
 // Every control in the bar is h-9 (36px). The select drops its native look (Safari ignores a native select's
 // height) and draws its own chevron.
@@ -18,6 +19,7 @@ export function Header({ user }: { user: string | undefined }) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  useCssHeightVar(headerRef, '--header-h');
 
   useEffect(() => {
     if (!open) return;

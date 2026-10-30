@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { listReceiptsOptions, listTrashOptions } from '@/api/client/@tanstack/react-query.gen';
@@ -10,6 +10,7 @@ import { ReceiptForm } from '@/components/ReceiptForm';
 import { ReceiptTable } from '@/components/ReceiptTable';
 import { TrashTable } from '@/components/TrashTable';
 import { filterReceipts } from '@/lib/receiptSearch';
+import { useCssHeightVar } from '@/lib/useCssHeightVar';
 import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
 
 const searchSchema = z.object({
@@ -70,6 +71,8 @@ function ReceiptsPage() {
   const { data: trash = noReceipts } = useQuery({ ...listTrashOptions(), enabled: tab === 'trash' });
   // Typed into local state (a controlled input fed from the URL would lag), mirrored to ?q= for back navigation.
   const [query, setQuery] = useState(search.q ?? '');
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  useCssHeightVar(toolbarRef, '--toolbar-h');
   const filtered = useMemo(
     () => filterReceipts(tab === 'trash' ? trash : receipts, query, i18n.language),
     [tab, trash, receipts, query, i18n.language],
@@ -78,7 +81,11 @@ function ReceiptsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* From sm up the toolbar sticks under the top bar (and the table header under it); --toolbar-h feeds that. */}
+      <div
+        ref={toolbarRef}
+        className="flex flex-col gap-3 bg-slate-50 sm:sticky sm:top-(--header-h) sm:z-20 sm:-my-2 sm:flex-row sm:items-center sm:justify-between sm:py-2 dark:bg-slate-950"
+      >
         {/* Phones: full width, three equal parts (a segmented control); from sm up: left-aligned with the table. */}
         <nav className="flex gap-1 rounded-lg bg-slate-200 p-1 sm:w-fit dark:bg-slate-900">
           {tabs.map(([id, label, params]) => (
