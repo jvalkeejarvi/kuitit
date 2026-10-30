@@ -1,4 +1,4 @@
-# Synology Container Manager "Project". Copy next to a .env file (see .env.example) and run:
+# Synology Container Manager "Project" (README > Deployment). Next to a .env file (see .env.example), or run:
 #   docker compose pull && docker compose up -d
 # With the optional telemetry dashboard:
 #   docker compose --profile dashboard up -d
@@ -26,7 +26,8 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      - ${KUITIT_DATA_DIR:-/volume1/docker/kuitit}:/data
+      # A subfolder, so the app can't read .env next to this file.
+      - ${KUITIT_DATA_DIR:-/volume1/docker/kuitit/data}:/data
     environment:
       Auth__Authority: ${OIDC_AUTHORITY:?set OIDC_AUTHORITY in .env}
       Auth__ClientId: ${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID in .env}

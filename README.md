@@ -64,18 +64,39 @@ TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) s
 
 ## Deployment (Synology DSM 7)
 
-1. **SSO Server** package: General Settings: set the server URL (HTTPS). Service: enable OIDC.
-   Application List: add an app with redirect URI `https://<host>/signin-oidc` and post-logout redirect URI
-   `https://<host>/signout-callback-oidc`. Note the client id, secret and well-known URL.
-2. **Storage**: create a shared folder (e.g. `kuitit`) and a DSM service user with RW only there. Get its
-   UID/GID over SSH with `id <user>`.
-3. **Reverse proxy**: Control Panel > Login Portal > Advanced > Reverse Proxy: HTTPS `<host>:443` to HTTP
-   `localhost:8080`. Under Custom Header add WebSocket/`X-Forwarded-*` headers. Use a Let's Encrypt cert.
-   Uploads are up to 20 MB; raise the proxy body size if uploads fail with 413.
-4. **Container Manager** > Project > Create: use `compose.yaml` from this repo and a `.env` based on
-   `.env.example`. The image is public, so no registry login is needed.
-5. Update: bump `KUITIT_VERSION` in `.env`, then `docker compose pull && docker compose up -d`. Migrations run at
-   startup, so take a backup first.
+Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
+
+### Install
+
+1. **Package Center**: install **Container Manager** and **SSO Server**.
+2. **Folders** (File Station): in the `docker` shared folder (created by Container Manager) create `kuitit`, and
+   inside it `data`. Pick the DSM user the app runs as (a dedicated user with read/write only on
+   `docker/kuitit` is safest) and get its UID and GID over SSH: `id <user>`.
+3. **Certificate** (Control Panel > Security > Certificate): add a Let's Encrypt certificate for
+   `kuitit.example.com`, or use an existing wildcard one.
+4. **Reverse proxy** (Control Panel > Login Portal > Advanced > Reverse Proxy > Create):
+   - Source: HTTPS, `kuitit.example.com`, port 443. Destination: HTTP, `localhost`, port 8080.
+   - Custom Header: Create > WebSocket, then add `X-Forwarded-Proto` = `$scheme`.
+   - Back in Certificate > Settings, assign the certificate to this proxy entry.
+   - Uploads are up to 20 MB; if they fail with 413, raise the proxy body size.
+5. **SSO Server**:
+   - General Settings: set the server URL (HTTPS).
+   - Service: enable OIDC.
+   - Application List > Add: redirect URI `https://kuitit.example.com/signin-oidc`, post-logout redirect URI
+     `https://kuitit.example.com/signout-callback-oidc`. Copy the client ID, client secret and well-known URL.
+6. **Files**: from the latest GitHub release download `compose.yaml` and `env.example`. Save `env.example` as
+   `.env`, fill in the required values (authority = well-known URL without `/.well-known/openid-configuration`,
+   client ID and secret, UID and GID from step 2) and upload both files to `docker/kuitit`.
+7. **Container Manager** > Project > Create: name `kuitit`, path `docker/kuitit`, use the existing compose
+   file, no web portal. It pulls the image and starts the container.
+8. Open `https://kuitit.example.com` and sign in with your DSM account.
+
+### Update
+
+1. Back up (see below); migrations run when the new version starts.
+2. Replace `docker/kuitit/compose.yaml` with the one from the new release (or set `KUITIT_VERSION` in `.env`).
+3. Container Manager > Project > `kuitit` > Action > Build. Over SSH instead, in `/volume1/docker/kuitit`:
+   `docker compose pull && docker compose up -d`.
 
 Logs: `docker compose logs -f kuitit` over SSH. Rotated at 3 x 10 MB (`x-logging` in `compose.yaml`).
 
@@ -87,18 +108,19 @@ Users: with `ALLOWED_USER_1=*` every DSM account can sign in, so inviting someon
 (Control Panel > User). Keep the Guest account disabled. To restrict, list emails or subjects in
 `ALLOWED_USER_N` instead and restart. Receipts are always private to their owner.
 
-"OIDC callback failed" behind the proxy is almost always the external URL or `X-Forwarded-Proto` not matching
+Troubleshooting: "OIDC callback failed" behind the proxy is almost always the external URL or `X-Forwarded-Proto` not matching
 the redirect URI registered in SSO Server.
 
 ### Backups
 
-Nightly Task Scheduler job, then Hyper Backup of the shared folder:
+Nightly Task Scheduler job (consistent copy of the live database), then Hyper Backup of `docker/kuitit`:
 
 ```sh
-sqlite3 /volume1/docker/kuitit/app.db ".backup '/volume1/docker/kuitit/backup/app.db'"
+mkdir -p /volume1/docker/kuitit/backup
+sqlite3 /volume1/docker/kuitit/data/app.db ".backup '/volume1/docker/kuitit/backup/app.db'"
 ```
 
-(or a Btrfs snapshot of the shared folder).
+(or a Btrfs snapshot of the `docker` shared folder).
 
 ## Releasing
 
