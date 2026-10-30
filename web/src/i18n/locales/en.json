@@ -139,5 +139,8 @@
     "archived": "\"{{name}}\" archived",
     "deleted": "Receipt moved to the trash",
     "fileRemoved": "File removed"
+  },
+  "menu": {
+    "label": "Menu"
   }
 }
