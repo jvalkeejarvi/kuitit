@@ -20,7 +20,14 @@ import { useDialog } from '@/lib/useDialog';
 
 const column = createColumnHelper<ReceiptDto>();
 
-const columnClass: Partial<Record<string, string>> = { actions: 'w-0' };
+// The icon column is hidden on phones, where it would force sideways scrolling; archive and delete are on the detail page.
+const columnClass: Partial<Record<string, string>> = {
+  // Long names wrap (between words) rather than widen the table past a phone screen.
+  name: 'whitespace-normal break-words hyphens-auto',
+  // Date above badge; the header may take two lines ("Takuu / päättyy") so the column stays narrow.
+  expiresOn: 'whitespace-normal',
+  actions: 'hidden w-0 sm:table-cell',
+};
 
 export function ReceiptTable({
   receipts,
@@ -63,7 +70,7 @@ export function ReceiptTable({
         header: () => t('receipts.expiresOn'),
         sortingFn: 'basic',
         cell: c => (
-          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="flex flex-col items-start gap-1">
             {formatDate(c.getValue(), i18n.language)}
             <StatusBadge expiresOn={c.getValue()} />
           </span>

@@ -19,7 +19,11 @@ import { useDialog } from '@/lib/useDialog';
 
 const column = createColumnHelper<ReceiptDto>();
 
-const columnClass: Partial<Record<string, string>> = { actions: 'w-0' };
+// The icon column is hidden on phones, where it would force sideways scrolling; restore and permanent delete are in the detail page banner.
+const columnClass: Partial<Record<string, string>> = {
+  name: 'whitespace-normal break-words hyphens-auto',
+  actions: 'hidden w-0 sm:table-cell',
+};
 
 const iconButtonClass =
   'rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100';

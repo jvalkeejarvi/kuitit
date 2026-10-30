@@ -27,7 +27,7 @@ export function DataTable<Row>({
                   <th
                     key={header.id}
                     aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                    className={`px-3 py-2 font-medium sm:px-4 ${columnClass[header.id] ?? ''}`}
+                    className={`px-2 py-2 font-medium sm:px-4 ${columnClass[header.id] ?? ''}`}
                   >
                     {header.column.getCanSort() ? (
                       <button
@@ -51,7 +51,7 @@ export function DataTable<Row>({
           {table.getRowModel().rows.map(row => (
             <tr key={row.id}>
               {row.getVisibleCells().map(cell => (
-                <td key={cell.id} className={`px-3 py-3 sm:px-4 ${columnClass[cell.column.id] ?? ''}`}>
+                <td key={cell.id} className={`px-2 py-3 sm:px-4 ${columnClass[cell.column.id] ?? ''}`}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
