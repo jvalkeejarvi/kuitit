@@ -10,9 +10,7 @@ public sealed record ReceiptDto(
     DateOnly PurchasedOn,
     int WarrantyMonths,
     DateOnly ExpiresOn,
-    string FileName,
-    string ContentType,
-    long SizeBytes,
+    ReceiptFileDto[] Files,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ArchivedAt
 )
@@ -26,12 +24,15 @@ public sealed record ReceiptDto(
             r.PurchasedOn,
             r.WarrantyMonths,
             r.ExpiresOn,
-            r.FileName,
-            r.ContentType,
-            r.SizeBytes,
+            [.. r.Files.OrderBy(f => f.Id).Select(ReceiptFileDto.From)],
             r.CreatedAt,
             r.ArchivedAt
         );
+}
+
+public sealed record ReceiptFileDto(Guid Id, string FileName, string ContentType, long SizeBytes)
+{
+    public static ReceiptFileDto From(ReceiptFile f) => new(f.Id, f.FileName, f.ContentType, f.SizeBytes);
 }
 
 public sealed record MeDto(string Email, string? Name);

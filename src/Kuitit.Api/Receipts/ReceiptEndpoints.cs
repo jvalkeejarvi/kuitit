@@ -20,7 +20,9 @@ internal static class ReceiptEndpoints
         receipts.MapGet("/", ListAsync).WithName("ListReceipts");
         receipts.MapPost("/", CreateAsync).WithName("CreateReceipt").DisableAntiforgery();
         receipts.MapGet("/{id:guid}", GetAsync).WithName("GetReceipt");
-        receipts.MapGet("/{id:guid}/file", GetFileAsync).WithName("GetReceiptFile");
+        receipts.MapPost("/{id:guid}/files", AddFilesAsync).WithName("AddReceiptFiles").DisableAntiforgery();
+        receipts.MapGet("/{id:guid}/files/{fileId:guid}", GetFileAsync).WithName("GetReceiptFile");
+        receipts.MapDelete("/{id:guid}/files/{fileId:guid}", DeleteFileAsync).WithName("DeleteReceiptFile");
         receipts
             .MapPost(
                 "/{id:guid}/archive",
@@ -43,9 +45,11 @@ internal static class ReceiptEndpoints
     private static async Task<Ok<ReceiptDto[]>> ListAsync(AppDbContext db, CancellationToken ct, bool archived = false)
     {
         var rows = await db
-            .Receipts.Where(r => archived ? r.ArchivedAt != null : r.ArchivedAt == null)
+            .Receipts.Include(r => r.Files)
+            .Where(r => archived ? r.ArchivedAt != null : r.ArchivedAt == null)
             .OrderBy(r => r.ExpiresOn)
             .ThenBy(r => r.Name)
+            .AsNoTracking()
             .ToListAsync(ct);
         return TypedResults.Ok(rows.Select(ReceiptDto.From).ToArray());
     }
@@ -54,11 +58,11 @@ internal static class ReceiptEndpoints
         [FromForm] string name,
         [FromForm] DateOnly purchasedOn,
         [FromForm] int warrantyMonths,
-        IFormFile file,
+        IFormFileCollection files,
         [FromForm] string? store,
         [FromForm] string? description,
         AppDbContext db,
-        IFileStore files,
+        IFileStore fileStore,
         ICurrentUser currentUser,
         TimeProvider time,
         CancellationToken ct
@@ -101,65 +105,30 @@ internal static class ReceiptEndpoints
             ];
         }
 
-        DetectedFileType? type = null;
-        if (file.Length == 0)
-        {
-            errors["file"] = ["File is empty."];
-        }
-        else if (file.Length > ReceiptRules.MaxFileBytes)
-        {
-            errors["file"] = ["File is too large."];
-        }
-        else
-        {
-            type = await DetectAsync(file, ct);
-            if (type is null)
-            {
-                errors["file"] = ["Only PDF, JPEG, PNG and HEIC files are allowed."];
-            }
-        }
-
-        if (errors.Count > 0 || type is null)
+        var uploads = await ValidateFilesAsync(files, existingCount: 0, errors, ct);
+        if (errors.Count > 0)
         {
             return TypedResults.ValidationProblem(errors);
         }
 
         var user = currentUser.Identity!;
-        var id = Guid.CreateVersion7();
+        var now = time.GetUtcNow();
         var receipt = new Receipt
         {
-            Id = id,
+            Id = Guid.CreateVersion7(),
             OwnerIssuer = user.Issuer,
             OwnerSub = user.Subject,
             OwnerEmail = user.Email,
             Name = name,
             Store = store,
             Description = description,
-            FileName = SafeFileName(file.FileName, type.Extension),
-            ContentType = type.ContentType,
-            StorageKey = $"{id:N}{type.Extension}",
-            SizeBytes = file.Length,
-            CreatedAt = time.GetUtcNow(),
+            CreatedAt = now,
         };
         receipt.SetWarranty(purchasedOn, warrantyMonths);
-
-        await using (var stream = file.OpenReadStream())
-        {
-            await files.SaveAsync(receipt.StorageKey, stream, ct);
-        }
-
         db.Receipts.Add(receipt);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch
-        {
-            await files.DeleteAsync(receipt.StorageKey, CancellationToken.None);
-            throw;
-        }
 
-        return TypedResults.Created($"/api/receipts/{id}", ReceiptDto.From(receipt));
+        await SaveFilesAsync(receipt, uploads, now, db, fileStore, ct);
+        return TypedResults.Created($"/api/receipts/{receipt.Id}", ReceiptDto.From(receipt));
     }
 
     private static async Task<Results<Ok<ReceiptDto>, NotFound>> GetAsync(
@@ -168,35 +137,92 @@ internal static class ReceiptEndpoints
         CancellationToken ct
     )
     {
-        var receipt = await db.Receipts.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+        var receipt = await db.Receipts.Include(r => r.Files).AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
         return receipt is null ? TypedResults.NotFound() : TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
-    private static async Task<Results<FileStreamHttpResult, NotFound>> GetFileAsync(
+    private static async Task<Results<Ok<ReceiptDto>, NotFound, ValidationProblem>> AddFilesAsync(
         Guid id,
+        IFormFileCollection files,
         AppDbContext db,
-        IFileStore files,
-        HttpContext http,
+        IFileStore fileStore,
+        TimeProvider time,
         CancellationToken ct
     )
     {
-        var receipt = await db.Receipts.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+        var receipt = await db.Receipts.Include(r => r.Files).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (receipt is null)
         {
             return TypedResults.NotFound();
         }
 
-        var stream = await files.OpenReadAsync(receipt.StorageKey, ct);
+        var errors = new Dictionary<string, string[]>();
+        var uploads = await ValidateFilesAsync(files, receipt.Files.Count, errors, ct);
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        await SaveFilesAsync(receipt, uploads, time.GetUtcNow(), db, fileStore, ct);
+        return TypedResults.Ok(ReceiptDto.From(receipt));
+    }
+
+    private static async Task<Results<FileStreamHttpResult, NotFound>> GetFileAsync(
+        Guid id,
+        Guid fileId,
+        AppDbContext db,
+        IFileStore fileStore,
+        HttpContext http,
+        CancellationToken ct
+    )
+    {
+        var file = await db
+            .ReceiptFiles.AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Id == fileId && f.ReceiptId == id, ct);
+        if (file is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var stream = await fileStore.OpenReadAsync(file.StorageKey, ct);
         if (stream is null)
         {
             return TypedResults.NotFound();
         }
 
         var disposition = new ContentDispositionHeaderValue("inline");
-        disposition.SetHttpFileName(receipt.FileName);
+        disposition.SetHttpFileName(file.FileName);
         http.Response.Headers.ContentDisposition = disposition.ToString();
         http.Response.Headers.CacheControl = "private, max-age=3600";
-        return TypedResults.Stream(stream, receipt.ContentType, enableRangeProcessing: true);
+        return TypedResults.Stream(stream, file.ContentType, enableRangeProcessing: true);
+    }
+
+    private static async Task<Results<Ok<ReceiptDto>, NotFound, ValidationProblem>> DeleteFileAsync(
+        Guid id,
+        Guid fileId,
+        AppDbContext db,
+        IFileStore fileStore,
+        CancellationToken ct
+    )
+    {
+        var receipt = await db.Receipts.Include(r => r.Files).FirstOrDefaultAsync(r => r.Id == id, ct);
+        var file = receipt?.Files.FirstOrDefault(f => f.Id == fileId);
+        if (receipt is null || file is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (receipt.Files.Count == 1)
+        {
+            return TypedResults.ValidationProblem(
+                new Dictionary<string, string[]> { ["files"] = ["A receipt needs at least one file."] }
+            );
+        }
+
+        receipt.Files.Remove(file);
+        await db.SaveChangesAsync(ct);
+        await fileStore.DeleteAsync(file.StorageKey, ct);
+        return TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
     private static async Task<Results<Ok<ReceiptDto>, NotFound>> SetArchivedAsync(
@@ -206,7 +232,7 @@ internal static class ReceiptEndpoints
         CancellationToken ct
     )
     {
-        var receipt = await db.Receipts.FirstOrDefaultAsync(r => r.Id == id, ct);
+        var receipt = await db.Receipts.Include(r => r.Files).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (receipt is null)
         {
             return TypedResults.NotFound();
@@ -217,17 +243,125 @@ internal static class ReceiptEndpoints
         return TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
-    private static async Task<NoContent> DeleteAsync(Guid id, AppDbContext db, IFileStore files, CancellationToken ct)
+    private static async Task<NoContent> DeleteAsync(
+        Guid id,
+        AppDbContext db,
+        IFileStore fileStore,
+        CancellationToken ct
+    )
     {
-        var receipt = await db.Receipts.FirstOrDefaultAsync(r => r.Id == id, ct);
+        var receipt = await db.Receipts.Include(r => r.Files).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (receipt is not null)
         {
             db.Receipts.Remove(receipt);
             await db.SaveChangesAsync(ct);
-            await files.DeleteAsync(receipt.StorageKey, ct);
+            foreach (var file in receipt.Files)
+            {
+                await fileStore.DeleteAsync(file.StorageKey, ct);
+            }
         }
 
         return TypedResults.NoContent();
+    }
+
+    private sealed record Upload(IFormFile File, DetectedFileType Type);
+
+    /// <summary>Checks count, size and content (magic bytes) of every file; adds to <paramref name="errors"/>.</summary>
+    private static async Task<List<Upload>> ValidateFilesAsync(
+        IFormFileCollection files,
+        int existingCount,
+        Dictionary<string, string[]> errors,
+        CancellationToken ct
+    )
+    {
+        if (files.Count == 0)
+        {
+            errors["files"] = ["Add at least one file."];
+            return [];
+        }
+
+        if (existingCount + files.Count > ReceiptRules.MaxFilesPerReceipt)
+        {
+            errors["files"] = [$"A receipt can have at most {ReceiptRules.MaxFilesPerReceipt} files."];
+            return [];
+        }
+
+        var uploads = new List<Upload>();
+        var problems = new List<string>();
+        foreach (var file in files)
+        {
+            if (file.Length == 0)
+            {
+                problems.Add($"{file.FileName}: file is empty.");
+            }
+            else if (file.Length > ReceiptRules.MaxFileBytes)
+            {
+                problems.Add($"{file.FileName}: file is too large.");
+            }
+            else if (await DetectAsync(file, ct) is { } type)
+            {
+                uploads.Add(new Upload(file, type));
+            }
+            else
+            {
+                problems.Add($"{file.FileName}: only PDF, JPEG, PNG and HEIC files are allowed.");
+            }
+        }
+
+        if (problems.Count > 0)
+        {
+            errors["files"] = [.. problems];
+        }
+
+        return uploads;
+    }
+
+    /// <summary>Writes the files, then the rows; files already written are removed if saving the rows fails.</summary>
+    private static async Task SaveFilesAsync(
+        Receipt receipt,
+        List<Upload> uploads,
+        DateTimeOffset now,
+        AppDbContext db,
+        IFileStore fileStore,
+        CancellationToken ct
+    )
+    {
+        var written = new List<string>();
+        try
+        {
+            foreach (var upload in uploads)
+            {
+                var id = Guid.CreateVersion7();
+                var file = new ReceiptFile
+                {
+                    Id = id,
+                    ReceiptId = receipt.Id,
+                    FileName = SafeFileName(upload.File.FileName, upload.Type.Extension),
+                    ContentType = upload.Type.ContentType,
+                    StorageKey = $"{id:N}{upload.Type.Extension}",
+                    SizeBytes = upload.File.Length,
+                    CreatedAt = now,
+                };
+                await using (var stream = upload.File.OpenReadStream())
+                {
+                    await fileStore.SaveAsync(file.StorageKey, stream, ct);
+                }
+
+                written.Add(file.StorageKey);
+                receipt.Files.Add(file);
+            }
+
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            foreach (var key in written)
+            {
+                await fileStore.DeleteAsync(key, CancellationToken.None);
+            }
+
+            throw;
+        }
     }
 
     private static async Task<DetectedFileType?> DetectAsync(IFormFile file, CancellationToken ct)

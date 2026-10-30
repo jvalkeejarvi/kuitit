@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kuitit.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261030172418_ReceiptStoreAndDescription")]
-    partial class ReceiptStoreAndDescription
+    [Migration("20261030213540_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,15 +23,9 @@ namespace Kuitit.Api.Data.Migrations
             modelBuilder.Entity("Kuitit.Api.Data.Receipt", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset?>("ArchivedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -42,11 +36,6 @@ namespace Kuitit.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("ExpiresOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -72,14 +61,6 @@ namespace Kuitit.Api.Data.Migrations
                     b.Property<DateOnly>("PurchasedOn")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("SizeBytes")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("StorageKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Store")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
@@ -92,6 +73,58 @@ namespace Kuitit.Api.Data.Migrations
                     b.HasIndex("OwnerIssuer", "OwnerSub");
 
                     b.ToTable("Receipts");
+                });
+
+            modelBuilder.Entity("Kuitit.Api.Data.ReceiptFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiptId");
+
+                    b.ToTable("ReceiptFiles");
+                });
+
+            modelBuilder.Entity("Kuitit.Api.Data.ReceiptFile", b =>
+                {
+                    b.HasOne("Kuitit.Api.Data.Receipt", "Receipt")
+                        .WithMany("Files")
+                        .HasForeignKey("ReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Receipt");
+                });
+
+            modelBuilder.Entity("Kuitit.Api.Data.Receipt", b =>
+                {
+                    b.Navigation("Files");
                 });
 #pragma warning restore 612, 618
         }

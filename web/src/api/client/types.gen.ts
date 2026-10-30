@@ -17,6 +17,8 @@ export type HttpValidationProblemDetails = {
 
 export type IFormFile = Blob | File;
 
+export type IFormFileCollection = Array<IFormFile>;
+
 export type MeDto = {
     email: string;
     name: null | string;
@@ -30,11 +32,16 @@ export type ReceiptDto = {
     purchasedOn: string;
     warrantyMonths: number;
     expiresOn: string;
+    files: Array<ReceiptFileDto>;
+    createdAt: string;
+    archivedAt: null | string;
+};
+
+export type ReceiptFileDto = {
+    id: string;
     fileName: string;
     contentType: string;
     sizeBytes: number;
-    createdAt: string;
-    archivedAt: null | string;
 };
 
 export type GetMeData = {
@@ -79,7 +86,7 @@ export type CreateReceiptData = {
     } & {
         warrantyMonths: number;
     } & {
-        file: IFormFile;
+        files: IFormFileCollection;
     } & {
         store?: string;
     } & {
@@ -151,13 +158,79 @@ export type GetReceiptResponses = {
 
 export type GetReceiptResponse = GetReceiptResponses[keyof GetReceiptResponses];
 
-export type GetReceiptFileData = {
-    body?: never;
+export type AddReceiptFilesData = {
+    body: {
+        files: IFormFileCollection;
+    };
     path: {
         id: string;
     };
     query?: never;
-    url: '/api/receipts/{id}/file';
+    url: '/api/receipts/{id}/files';
+};
+
+export type AddReceiptFilesErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type AddReceiptFilesError = AddReceiptFilesErrors[keyof AddReceiptFilesErrors];
+
+export type AddReceiptFilesResponses = {
+    /**
+     * OK
+     */
+    200: ReceiptDto;
+};
+
+export type AddReceiptFilesResponse = AddReceiptFilesResponses[keyof AddReceiptFilesResponses];
+
+export type DeleteReceiptFileData = {
+    body?: never;
+    path: {
+        id: string;
+        fileId: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}/files/{fileId}';
+};
+
+export type DeleteReceiptFileErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type DeleteReceiptFileError = DeleteReceiptFileErrors[keyof DeleteReceiptFileErrors];
+
+export type DeleteReceiptFileResponses = {
+    /**
+     * OK
+     */
+    200: ReceiptDto;
+};
+
+export type DeleteReceiptFileResponse = DeleteReceiptFileResponses[keyof DeleteReceiptFileResponses];
+
+export type GetReceiptFileData = {
+    body?: never;
+    path: {
+        id: string;
+        fileId: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}/files/{fileId}';
 };
 
 export type GetReceiptFileErrors = {

@@ -28,6 +28,9 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         return (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
     }
 
+    private static async Task<ReceiptDto> GetAsync(HttpClient client, Guid id) =>
+        (await client.GetFromJsonAsync<ReceiptDto>($"/api/receipts/{id}", Ct))!;
+
     private async Task<ReceiptDto[]> ListAsync(HttpClient client, bool archived = false) =>
         (await client.GetFromJsonAsync<ReceiptDto[]>($"/api/receipts?archived={archived}", Ct))!;
 
@@ -63,8 +66,11 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         receipt.PurchasedOn.Should().Be(new DateOnly(2025, 8, 31));
         receipt.WarrantyMonths.Should().Be(6);
         receipt.ExpiresOn.Should().Be(new DateOnly(2026, 2, 28));
-        receipt.ContentType.Should().Be("application/pdf");
-        receipt.FileName.Should().Be("receipt.pdf");
+        receipt
+            .Files.Should()
+            .ContainSingle()
+            .Which.Should()
+            .Match<ReceiptFileDto>(f => f.ContentType == "application/pdf" && f.FileName == "receipt.pdf");
         receipt.CreatedAt.Should().Be(_factory.Time.GetUtcNow());
         receipt.Store.Should().BeNull();
         receipt.Description.Should().BeNull();
@@ -135,14 +141,19 @@ public sealed class ReceiptApiTests : IAsyncLifetime
 
         (await ListAsync(_bob)).Should().BeEmpty();
         (await _bob.GetAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
-        (await _bob.GetAsync($"/api/receipts/{receipt.Id}/file", Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var fileUrl = $"/api/receipts/{receipt.Id}/files/{receipt.Files[0].Id}";
+        (await _bob.GetAsync(fileUrl, Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await _bob.DeleteAsync(fileUrl, Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await _bob.PostAsync($"/api/receipts/{receipt.Id}/files", TestFiles.Files(TestFiles.Png), Ct))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.NotFound);
         (await _bob.PostAsync($"/api/receipts/{receipt.Id}/archive", null, Ct))
             .StatusCode.Should()
             .Be(HttpStatusCode.NotFound);
         (await _bob.DeleteAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         (await ListAsync(_alice)).Should().ContainSingle(r => r.Id == receipt.Id && r.ArchivedAt == null);
-        (await _alice.GetAsync($"/api/receipts/{receipt.Id}/file", Ct)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await _alice.GetAsync(fileUrl, Ct)).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -150,7 +161,7 @@ public sealed class ReceiptApiTests : IAsyncLifetime
     {
         var receipt = await CreateAsync(_alice, file: TestFiles.Png);
 
-        var response = await _alice.GetAsync($"/api/receipts/{receipt.Id}/file", Ct);
+        var response = await _alice.GetAsync($"/api/receipts/{receipt.Id}/files/{receipt.Files[0].Id}", Ct);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
@@ -182,7 +193,7 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         );
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!.ContentType.Should().Be(expectedType);
+        (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!.Files[0].ContentType.Should().Be(expectedType);
     }
 
     [Fact]
@@ -194,7 +205,7 @@ public sealed class ReceiptApiTests : IAsyncLifetime
             Ct
         );
 
-        await ShouldBeValidationErrorAsync(response, "file");
+        await ShouldBeValidationErrorAsync(response, "files");
     }
 
     [Theory]
@@ -231,7 +242,7 @@ public sealed class ReceiptApiTests : IAsyncLifetime
     {
         var response = await _alice.PostAsync("/api/receipts", TestFiles.Form(file: []), Ct);
 
-        await ShouldBeValidationErrorAsync(response, "file");
+        await ShouldBeValidationErrorAsync(response, "files");
     }
 
     [Fact]
@@ -252,13 +263,100 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         var response = await _alice.PostAsync("/api/receipts", TestFiles.Form(fileName: "../../etc/passwd.pdf"), Ct);
 
         var receipt = (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
-        receipt.FileName.Should().Be("passwd.pdf");
+        receipt.Files[0].FileName.Should().Be("passwd.pdf");
         Directory
             .GetFiles(Path.Combine(_factory.DataDir, "files"))
             .Should()
             .ContainSingle()
             .Which.Should()
-            .EndWith($"{receipt.Id:N}.pdf");
+            .EndWith($"{receipt.Files[0].Id:N}.pdf");
+    }
+
+    [Fact]
+    public async Task Create_accepts_several_files_in_upload_order()
+    {
+        var form = TestFiles.Form(fileName: "first.pdf");
+        var png = new ByteArrayContent(TestFiles.Png);
+        form.Add(png, "files", "second.png");
+
+        var response = await _alice.PostAsync("/api/receipts", form, Ct);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var receipt = (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
+        receipt
+            .Files.Select(f => (f.FileName, f.ContentType))
+            .Should()
+            .Equal(("first.pdf", "application/pdf"), ("second.png", "image/png"));
+        (await GetAsync(_alice, receipt.Id)).Files.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task Create_needs_a_file_and_rejects_more_than_the_limit()
+    {
+        var none = await _alice.PostAsync("/api/receipts", TestFiles.Form(fileCount: 0), Ct);
+        var tooMany = await _alice.PostAsync(
+            "/api/receipts",
+            TestFiles.Form(fileCount: ReceiptRules.MaxFilesPerReceipt + 1),
+            Ct
+        );
+
+        await ShouldBeValidationErrorAsync(none, "files");
+        await ShouldBeValidationErrorAsync(tooMany, "files");
+        (await ListAsync(_alice)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task One_bad_file_rejects_the_whole_upload()
+    {
+        var form = TestFiles.Form();
+        form.Add(new ByteArrayContent(TestFiles.Text), "files", "notes.txt");
+
+        var response = await _alice.PostAsync("/api/receipts", form, Ct);
+
+        await ShouldBeValidationErrorAsync(response, "files");
+        (await ListAsync(_alice)).Should().BeEmpty();
+        Directory.Exists(Path.Combine(_factory.DataDir, "files")).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Files_can_be_added_up_to_the_limit()
+    {
+        var receipt = await CreateAsync(_alice);
+
+        var added = await _alice.PostAsync(
+            $"/api/receipts/{receipt.Id}/files",
+            TestFiles.Files(TestFiles.Png, TestFiles.Jpeg),
+            Ct
+        );
+        added.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await added.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!
+            .Files.Select(f => f.ContentType)
+            .Should()
+            .Equal("application/pdf", "image/png", "image/jpeg");
+
+        var full = TestFiles.Files([.. Enumerable.Repeat(TestFiles.Png, ReceiptRules.MaxFilesPerReceipt - 2)]);
+        var overLimit = await _alice.PostAsync($"/api/receipts/{receipt.Id}/files", full, Ct);
+        await ShouldBeValidationErrorAsync(overLimit, "files");
+        (await GetAsync(_alice, receipt.Id)).Files.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task A_file_can_be_removed_but_not_the_last_one()
+    {
+        var created = await _alice.PostAsync("/api/receipts", TestFiles.Form(fileCount: 2), Ct);
+        var receipt = (await created.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
+        var (first, second) = (receipt.Files[0], receipt.Files[1]);
+
+        var removed = await _alice.DeleteAsync($"/api/receipts/{receipt.Id}/files/{first.Id}", Ct);
+        removed.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await removed.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!.Files.Should().ContainSingle(f => f.Id == second.Id);
+        Directory.GetFiles(Path.Combine(_factory.DataDir, "files")).Should().ContainSingle();
+        (await _alice.GetAsync($"/api/receipts/{receipt.Id}/files/{first.Id}", Ct))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.NotFound);
+
+        var last = await _alice.DeleteAsync($"/api/receipts/{receipt.Id}/files/{second.Id}", Ct);
+        await ShouldBeValidationErrorAsync(last, "files");
     }
 
     [Fact]
@@ -291,9 +389,11 @@ public sealed class ReceiptApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Delete_removes_row_and_file_and_is_idempotent()
+    public async Task Delete_removes_row_and_all_files_and_is_idempotent()
     {
-        var receipt = await CreateAsync(_alice);
+        var created = await _alice.PostAsync("/api/receipts", TestFiles.Form(fileCount: 2), Ct);
+        var receipt = (await created.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
+        receipt.Files.Should().HaveCount(2);
 
         (await _alice.DeleteAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await _alice.DeleteAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NoContent);

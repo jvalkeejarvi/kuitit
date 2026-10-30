@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ArchiveReceiptData, ArchiveReceiptErrors, ArchiveReceiptResponses, CreateReceiptData, CreateReceiptErrors, CreateReceiptResponses, DeleteReceiptData, DeleteReceiptResponses, GetMeData, GetMeResponses, GetReceiptData, GetReceiptErrors, GetReceiptFileData, GetReceiptFileErrors, GetReceiptResponses, ListReceiptsData, ListReceiptsResponses, UnarchiveReceiptData, UnarchiveReceiptErrors, UnarchiveReceiptResponses } from './types.gen';
+import type { AddReceiptFilesData, AddReceiptFilesErrors, AddReceiptFilesResponses, ArchiveReceiptData, ArchiveReceiptErrors, ArchiveReceiptResponses, CreateReceiptData, CreateReceiptErrors, CreateReceiptResponses, DeleteReceiptData, DeleteReceiptFileData, DeleteReceiptFileErrors, DeleteReceiptFileResponses, DeleteReceiptResponses, GetMeData, GetMeResponses, GetReceiptData, GetReceiptErrors, GetReceiptFileData, GetReceiptFileErrors, GetReceiptResponses, ListReceiptsData, ListReceiptsResponses, UnarchiveReceiptData, UnarchiveReceiptErrors, UnarchiveReceiptResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -36,7 +36,19 @@ export const deleteReceipt = <ThrowOnError extends boolean = false>(options: Opt
 
 export const getReceipt = <ThrowOnError extends boolean = false>(options: Options<GetReceiptData, ThrowOnError>): RequestResult<GetReceiptResponses, GetReceiptErrors, ThrowOnError> => (options.client ?? client).get<GetReceiptResponses, GetReceiptErrors, ThrowOnError>({ url: '/api/receipts/{id}', ...options });
 
-export const getReceiptFile = <ThrowOnError extends boolean = false>(options: Options<GetReceiptFileData, ThrowOnError>): RequestResult<unknown, GetReceiptFileErrors, ThrowOnError> => (options.client ?? client).get<unknown, GetReceiptFileErrors, ThrowOnError>({ url: '/api/receipts/{id}/file', ...options });
+export const addReceiptFiles = <ThrowOnError extends boolean = false>(options: Options<AddReceiptFilesData, ThrowOnError>): RequestResult<AddReceiptFilesResponses, AddReceiptFilesErrors, ThrowOnError> => (options.client ?? client).post<AddReceiptFilesResponses, AddReceiptFilesErrors, ThrowOnError>({
+    ...formDataBodySerializer,
+    url: '/api/receipts/{id}/files',
+    ...options,
+    headers: {
+        'Content-Type': null,
+        ...options.headers
+    }
+});
+
+export const deleteReceiptFile = <ThrowOnError extends boolean = false>(options: Options<DeleteReceiptFileData, ThrowOnError>): RequestResult<DeleteReceiptFileResponses, DeleteReceiptFileErrors, ThrowOnError> => (options.client ?? client).delete<DeleteReceiptFileResponses, DeleteReceiptFileErrors, ThrowOnError>({ url: '/api/receipts/{id}/files/{fileId}', ...options });
+
+export const getReceiptFile = <ThrowOnError extends boolean = false>(options: Options<GetReceiptFileData, ThrowOnError>): RequestResult<unknown, GetReceiptFileErrors, ThrowOnError> => (options.client ?? client).get<unknown, GetReceiptFileErrors, ThrowOnError>({ url: '/api/receipts/{id}/files/{fileId}', ...options });
 
 export const archiveReceipt = <ThrowOnError extends boolean = false>(options: Options<ArchiveReceiptData, ThrowOnError>): RequestResult<ArchiveReceiptResponses, ArchiveReceiptErrors, ThrowOnError> => (options.client ?? client).post<ArchiveReceiptResponses, ArchiveReceiptErrors, ThrowOnError>({ url: '/api/receipts/{id}/archive', ...options });
 

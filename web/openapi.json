@@ -70,7 +70,7 @@
                   "name",
                   "purchasedOn",
                   "warrantyMonths",
-                  "file"
+                  "files"
                 ],
                 "type": "object",
                 "allOf": [
@@ -103,8 +103,8 @@
                   {
                     "type": "object",
                     "properties": {
-                      "file": {
-                        "$ref": "#/components/schemas/IFormFile"
+                      "files": {
+                        "$ref": "#/components/schemas/IFormFileCollection"
                       }
                     }
                   },
@@ -210,7 +210,69 @@
         }
       }
     },
-    "/api/receipts/{id}/file": {
+    "/api/receipts/{id}/files": {
+      "post": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "AddReceiptFiles",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "files"
+                ],
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "$ref": "#/components/schemas/IFormFileCollection"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receipts/{id}/files/{fileId}": {
       "get": {
         "tags": [
           "Receipts"
@@ -225,11 +287,71 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "404": {
             "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "DeleteReceiptFile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -354,6 +476,12 @@
         "type": "string",
         "format": "binary"
       },
+      "IFormFileCollection": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/IFormFile"
+        }
+      },
       "MeDto": {
         "required": [
           "email",
@@ -381,9 +509,7 @@
           "purchasedOn",
           "warrantyMonths",
           "expiresOn",
-          "fileName",
-          "contentType",
-          "sizeBytes",
+          "files",
           "createdAt",
           "archivedAt"
         ],
@@ -420,15 +546,11 @@
             "type": "string",
             "format": "date"
           },
-          "fileName": {
-            "type": "string"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "sizeBytes": {
-            "type": "integer",
-            "format": "int64"
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiptFileDto"
+            }
           },
           "createdAt": {
             "type": "string",
@@ -440,6 +562,31 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "ReceiptFileDto": {
+        "required": [
+          "id",
+          "fileName",
+          "contentType",
+          "sizeBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }

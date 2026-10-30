@@ -28,7 +28,7 @@ if (isGeneratingOpenApi)
 }
 
 // Multipart overhead on top of the file itself.
-const long maxRequestBytes = ReceiptRules.MaxFileBytes + (1024 * 1024);
+const long maxRequestBytes = ReceiptRules.MaxUploadBytes + (1024 * 1024);
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = maxRequestBytes);
 builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = maxRequestBytes);
 

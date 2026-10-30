@@ -10,6 +10,11 @@ public static class ReceiptRules
 
     public const long MaxFileBytes = 20 * 1024 * 1024;
 
+    public const int MaxFilesPerReceipt = 10;
+
+    /// <summary>Total for one upload request (several files at once).</summary>
+    public const long MaxUploadBytes = 60 * 1024 * 1024;
+
     public const int MinWarrantyMonths = 1;
 
     public const int MaxWarrantyMonths = 600;

@@ -18,18 +18,21 @@ internal static class TestFiles
         string fileName = "receipt.pdf",
         string declaredType = "application/pdf",
         string? store = null,
-        string? description = null
+        string? description = null,
+        int fileCount = 1
     )
     {
-        var content = new ByteArrayContent(file ?? Pdf);
-        content.Headers.ContentType = new MediaTypeHeaderValue(declaredType);
         var form = new MultipartFormDataContent
         {
             { new StringContent(name), "name" },
             { new StringContent(purchasedOn), "purchasedOn" },
             { new StringContent(warrantyMonths), "warrantyMonths" },
-            { content, "file", fileName },
         };
+        for (var i = 0; i < fileCount; i++)
+        {
+            form.Add(File(file ?? Pdf, declaredType), "files", fileName);
+        }
+
         if (store is not null)
         {
             form.Add(new StringContent(store), "store");
@@ -41,5 +44,24 @@ internal static class TestFiles
         }
 
         return form;
+    }
+
+    /// <summary>Just files, for adding to an existing receipt.</summary>
+    public static MultipartFormDataContent Files(params byte[][] files)
+    {
+        var form = new MultipartFormDataContent();
+        foreach (var file in files)
+        {
+            form.Add(File(file, "application/octet-stream"), "files", "extra.bin");
+        }
+
+        return form;
+    }
+
+    private static ByteArrayContent File(byte[] bytes, string declaredType)
+    {
+        var content = new ByteArrayContent(bytes);
+        content.Headers.ContentType = new MediaTypeHeaderValue(declaredType);
+        return content;
     }
 }
