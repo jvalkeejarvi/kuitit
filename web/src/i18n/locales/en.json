@@ -28,7 +28,6 @@
     "expiresOn": "Warranty until",
     "file": "File",
     "actions": "Actions",
-    "open": "Open",
     "archive": "Archive",
     "unarchive": "Restore",
     "delete": "Delete",
@@ -39,6 +38,23 @@
       "expiringSoon": "Expires soon",
       "valid": "Valid"
     }
+  },
+  "detail": {
+    "purchasedOn": "Purchased",
+    "warranty": "Warranty",
+    "expiresOn": "Warranty until",
+    "description": "Description",
+    "file": "File",
+    "added": "Added",
+    "archivedAt": "Archived",
+    "preview": "Receipt for {{name}}",
+    "openFile": "Open receipt",
+    "notFound": "Receipt not found.",
+    "backToList": "Back to receipts",
+    "years_one": "{{count}} year",
+    "years_other": "{{count}} years",
+    "months_one": "{{count}} month",
+    "months_other": "{{count}} months"
   },
   "form": {
     "title": "New receipt",

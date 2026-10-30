@@ -28,7 +28,6 @@
     "expiresOn": "Takuu päättyy",
     "file": "Tiedosto",
     "actions": "Toiminnot",
-    "open": "Avaa",
     "archive": "Arkistoi",
     "unarchive": "Palauta",
     "delete": "Poista",
@@ -39,6 +38,23 @@
       "expiringSoon": "Päättymässä",
       "valid": "Voimassa"
     }
+  },
+  "detail": {
+    "purchasedOn": "Ostettu",
+    "warranty": "Takuu",
+    "expiresOn": "Takuu päättyy",
+    "description": "Kuvaus",
+    "file": "Tiedosto",
+    "added": "Lisätty",
+    "archivedAt": "Arkistoitu",
+    "preview": "Kuitti: {{name}}",
+    "openFile": "Avaa kuitti",
+    "notFound": "Kuittia ei löytynyt.",
+    "backToList": "Takaisin kuitteihin",
+    "years_one": "{{count}} vuosi",
+    "years_other": "{{count}} vuotta",
+    "months_one": "{{count}} kuukausi",
+    "months_other": "{{count}} kuukautta"
   },
   "form": {
     "title": "Uusi kuitti",
