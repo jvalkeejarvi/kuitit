@@ -25,7 +25,6 @@ artifacts/
 node_modules/
 web/dist/
 web/coverage/
-web/src/routeTree.gen.ts
 *.tsbuildinfo
 
 # Env / secrets
