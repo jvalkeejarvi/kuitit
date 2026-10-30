@@ -5,9 +5,11 @@ import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { configureApiClient } from './api/setup';
+import { reloadOnStaleChunks } from './lib/staleChunks';
 import { routeTree } from './routeTree.gen';
 
 configureApiClient();
+reloadOnStaleChunks();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: false }, mutations: { retry: false } },

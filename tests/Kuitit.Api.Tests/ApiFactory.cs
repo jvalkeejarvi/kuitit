@@ -36,10 +36,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         return client;
     }
 
+    /// <summary>A minimal built SPA: index.html plus one hashed asset.</summary>
+    private string CreateWebRoot()
+    {
+        var root = Path.Combine(DataDir, "wwwroot");
+        Directory.CreateDirectory(Path.Combine(root, "assets"));
+        File.WriteAllText(Path.Combine(root, "index.html"), "<!doctype html><title>Kuitit</title>");
+        File.WriteAllText(Path.Combine(root, "assets", "index-abc123.js"), "console.log(1);");
+        return root;
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("DATA_DIR", DataDir);
+        builder.UseWebRoot(CreateWebRoot());
         builder.UseSetting("Auth:Authority", Issuer);
         builder.UseSetting("Auth:ClientId", "tests");
         builder.ConfigureServices(services =>

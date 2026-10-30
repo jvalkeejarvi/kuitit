@@ -5,6 +5,7 @@ using Kuitit.Api.Auth;
 using Kuitit.Api.Data;
 using Kuitit.Api.Files;
 using Kuitit.Api.Receipts;
+using Kuitit.Api.Spa;
 using Kuitit.Api.Telemetry;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
@@ -73,7 +74,7 @@ app.Use(
     }
 );
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(SpaFiles.Options);
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -81,7 +82,7 @@ app.MapOpenApi();
 app.MapHealthChecks("/healthz");
 app.MapAuth();
 app.MapApi();
-app.MapFallbackToFile("index.html");
+app.MapSpaFallback();
 
 app.Run();
 
