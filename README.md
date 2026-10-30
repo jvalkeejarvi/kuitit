@@ -145,20 +145,23 @@ the redirect URI registered in SSO Server.
 
 ### Backups
 
-Nightly Task Scheduler job (consistent copy of the live database), then Hyper Backup of the `kuitit` shared
-folder with backup encryption on, so copies that leave the NAS are encrypted. In the backup task's file filter
-exclude `data/app.db*`: the live database can be caught mid-write, and `backup/app.db` is the consistent copy.
+Hyper Backup of the whole `kuitit` shared folder (no file filter) plus `docker/kuitit` (`.env` holds the client
+secret). Turn on backup encryption for destinations off the NAS and keep several versions (Smart Recycle).
+
+The database is copied while live. A copy taken during a write can be inconsistent; writes are rare (adding,
+archiving, deleting), so this is unlikely, and the previous version is the fallback. Receipt files are plain
+files and always copy intact; what a bad database copy would lose is their names, dates and owners.
+
+Restore: stop the `kuitit` project, restore `data/` (including `app.db` and `app.db-wal`), delete
+`data/app.db-shm`, then start the project. If the database doesn't open, restore the previous version.
+
+Optional, for a guaranteed-consistent database copy: a nightly Task Scheduler job (user `root`) before the
+Hyper Backup run, and restore `backup/app.db` as `data/app.db` (deleting `app.db-wal` and `app.db-shm`):
 
 ```sh
 mkdir -p /volume1/kuitit/backup
 sqlite3 /volume1/kuitit/data/app.db ".backup '/volume1/kuitit/backup/app.db'"
 ```
-
-(or a Btrfs snapshot of the `kuitit` shared folder). Back up `docker/kuitit/.env` separately; it holds the
-client secret.
-
-Restore: stop the `kuitit` project, copy `backup/app.db` over `data/app.db` (delete `data/app.db-wal` and
-`data/app.db-shm`), restore `data/files/` and `data/keys/`, then start the project.
 
 ## Releasing
 
