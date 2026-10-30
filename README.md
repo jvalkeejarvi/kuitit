@@ -95,7 +95,7 @@ the redirect URI registered in SSO Server.
 Nightly Task Scheduler job, then Hyper Backup of the shared folder:
 
 ```sh
-sqlite3 /volume1/kuitit/app.db ".backup '/volume1/kuitit/backup/app.db'"
+sqlite3 /volume1/docker/kuitit/app.db ".backup '/volume1/docker/kuitit/backup/app.db'"
 ```
 
 (or a Btrfs snapshot of the shared folder).

@@ -11,11 +11,12 @@ x-logging: &logging
 
 services:
   kuitit:
-    image: ghcr.io/jvalkeejarvi/kuitit:${KUITIT_VERSION:?set KUITIT_VERSION in .env}
+    # Release assets pin the default to that release, so migrations only run when you choose to update.
+    image: ghcr.io/jvalkeejarvi/kuitit:${KUITIT_VERSION:-latest}
     restart: unless-stopped
     logging: *logging
     # UID:GID of the DSM service user that owns the data folder.
-    user: "${KUITIT_UID:?}:${KUITIT_GID:?}"
+    user: "${KUITIT_UID:?set KUITIT_UID in .env}:${KUITIT_GID:?set KUITIT_GID in .env}"
     read_only: true
     tmpfs:
       - /tmp
@@ -25,12 +26,13 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      - ${KUITIT_DATA_DIR:?}:/data
+      - ${KUITIT_DATA_DIR:-/volume1/docker/kuitit}:/data
     environment:
-      Auth__Authority: ${OIDC_AUTHORITY:?}
-      Auth__ClientId: ${OIDC_CLIENT_ID:?}
-      Auth__ClientSecret: ${OIDC_CLIENT_SECRET:?}
-      Auth__AllowedUsers__0: ${ALLOWED_USER_1:?}
+      Auth__Authority: ${OIDC_AUTHORITY:?set OIDC_AUTHORITY in .env}
+      Auth__ClientId: ${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID in .env}
+      Auth__ClientSecret: ${OIDC_CLIENT_SECRET:?set OIDC_CLIENT_SECRET in .env}
+      # Every DSM account by default; see README "Users".
+      Auth__AllowedUsers__0: ${ALLOWED_USER_1:-*}
       Auth__AllowedUsers__1: ${ALLOWED_USER_2:-}
       Auth__AllowedUsers__2: ${ALLOWED_USER_3:-}
       # Optional cap; the GC trims to this under pressure.
