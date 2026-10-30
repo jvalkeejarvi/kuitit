@@ -11,7 +11,8 @@ import { fileProblems, MAX_FILES } from '@/lib/receiptRules';
 import { useDialog } from '@/lib/useDialog';
 
 /** The receipt's files: previews or icons that open the file, plus adding and removing. */
-export function ReceiptFiles({ receipt }: { receipt: ReceiptDto }) {
+/** `readOnly` (a trashed receipt): files can be opened but not added or removed. */
+export function ReceiptFiles({ receipt, readOnly = false }: { receipt: ReceiptDto; readOnly?: boolean }) {
   const { t, i18n } = useTranslation();
   const { add, remove } = useFileMutations();
   const [dialogNode, openDialog] = useDialog();
@@ -63,22 +64,24 @@ export function ReceiptFiles({ receipt }: { receipt: ReceiptDto }) {
                   </p>
                   <p className="text-slate-500">{formatFileSize(file.sizeBytes, i18n.language)}</p>
                 </div>
-                <button
-                  type="button"
-                  aria-label={t('files.delete', { name: file.fileName })}
-                  title={onlyOne ? t('files.lastFile') : t('receipts.delete')}
-                  disabled={onlyOne || remove.isPending}
-                  onClick={() => void onRemove(file.id, file.fileName)}
-                  className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-red-600 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500 dark:hover:bg-slate-800"
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    aria-label={t('files.delete', { name: file.fileName })}
+                    title={onlyOne ? t('files.lastFile') : t('receipts.delete')}
+                    disabled={onlyOne || remove.isPending}
+                    onClick={() => void onRemove(file.id, file.fileName)}
+                    className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-red-600 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500 dark:hover:bg-slate-800"
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                )}
               </div>
             </li>
           );
         })}
       </ul>
-      <FilePicker disabled={receipt.files.length >= MAX_FILES || add.isPending} onFiles={onAdd} />
+      {!readOnly && <FilePicker disabled={receipt.files.length >= MAX_FILES || add.isPending} onFiles={onAdd} />}
       {add.isPending && <p className="text-sm text-slate-500">{t('files.uploading')}</p>}
       {[...problems, ...(add.isError || remove.isError ? [t('files.errors.server')] : [])].map(message => (
         <p key={message} role="alert" className="text-sm text-red-600 dark:text-red-400">

@@ -5,13 +5,14 @@ import {
   useReactTable,
   type SortingState,
 } from '@tanstack/react-table';
+import { Link } from '@tanstack/react-router';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ReceiptDto } from '@/api/client/types.gen';
 import { DataTable } from '@/components/DataTable';
 import { confirmDeletePermanently } from '@/lib/confirmations';
-import { formatDate, formatTimestamp } from '@/lib/dates';
+import { formatTimestamp } from '@/lib/dates';
 import { useTrashMutations } from '@/lib/receiptMutations';
 import { TRASH_DAYS } from '@/lib/receiptRules';
 import { useDialog } from '@/lib/useDialog';
@@ -23,13 +24,6 @@ const columnClass: Partial<Record<string, string>> = { actions: 'w-0' };
 const iconButtonClass =
   'rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100';
 
-/** When the purge job removes it for good. */
-function purgeDate(deletedAt: string): Date {
-  const date = new Date(deletedAt);
-  date.setDate(date.getDate() + TRASH_DAYS);
-  return date;
-}
-
 export function TrashTable({ receipts }: { receipts: ReceiptDto[] }) {
   const { t, i18n } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([{ id: 'deletedAt', desc: true }]);
@@ -40,32 +34,27 @@ export function TrashTable({ receipts }: { receipts: ReceiptDto[] }) {
         header: () => t('receipts.name'),
         sortingFn: (a, b) =>
           a.original.name.localeCompare(b.original.name, i18n.language, { numeric: true, sensitivity: 'base' }),
-        // Not a link: trashed receipts can't be opened, only restored.
+        // Opens the read-only detail page (restore or delete from there too).
         cell: c => (
-          <>
-            <span className="block font-medium">{c.getValue()}</span>
+          <Link
+            to="/receipts/$id"
+            params={{ id: c.row.original.id }}
+            className="block font-medium text-brand hover:underline dark:text-teal-400"
+          >
+            {c.getValue()}
             {c.row.original.store && (
-              <span className="block text-xs text-slate-500 dark:text-slate-400">{c.row.original.store}</span>
+              <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">
+                {c.row.original.store}
+              </span>
             )}
-          </>
+          </Link>
         ),
-      }),
-      column.accessor('purchasedOn', {
-        header: () => t('receipts.purchasedOn'),
-        sortingFn: 'basic',
-        cell: c => formatDate(c.getValue(), i18n.language),
       }),
       column.accessor(r => r.deletedAt ?? '', {
         id: 'deletedAt',
         header: () => t('trash.deletedAt'),
         sortingFn: 'basic',
         cell: c => formatTimestamp(c.getValue(), i18n.language),
-      }),
-      column.accessor(r => r.deletedAt ?? '', {
-        id: 'purgeOn',
-        header: () => t('trash.purgeOn'),
-        sortingFn: 'basic',
-        cell: c => formatTimestamp(purgeDate(c.getValue()).toISOString(), i18n.language),
       }),
       column.display({
         id: 'actions',

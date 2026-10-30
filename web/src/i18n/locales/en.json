@@ -129,7 +129,7 @@
     "confirmTitle": "Delete permanently?",
     "confirmBody": "\"{{name}}\" and its files are deleted for good. This can't be undone.",
     "deletedAt": "Deleted",
-    "purgeOn": "Deleted for good"
+    "banner": "This receipt is in the trash and will be deleted permanently on {{date}}."
   },
   "toast": {
     "undo": "Undo",

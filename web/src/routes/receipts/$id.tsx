@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getReceiptOptions } from '@/api/client/@tanstack/react-query.gen';
@@ -8,9 +8,10 @@ import type { ReceiptDto } from '@/api/client/types.gen';
 import { ReceiptFiles } from '@/components/ReceiptFiles';
 import { ReceiptForm } from '@/components/ReceiptForm';
 import { StatusBadge } from '@/components/StatusBadge';
-import { confirmArchive, confirmDelete } from '@/lib/confirmations';
+import { confirmArchive, confirmDelete, confirmDeletePermanently } from '@/lib/confirmations';
 import { formatDate, formatTimestamp } from '@/lib/dates';
-import { useArchiveMutations, useDeleteMutation } from '@/lib/receiptMutations';
+import { useArchiveMutations, useDeleteMutation, useTrashMutations } from '@/lib/receiptMutations';
+import { purgeDate } from '@/lib/receiptRules';
 import { useDialog } from '@/lib/useDialog';
 
 export const Route = createFileRoute('/receipts/$id')({
@@ -43,7 +44,8 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
   const [dialogNode, openDialog] = useDialog();
   const [editing, setEditing] = useState(false);
   const archived = receipt.archivedAt != null;
-  const backSearch = archived ? { archived: true } : {};
+  const trashed = receipt.deletedAt != null;
+  const backSearch = trashed ? { trash: true } : archived ? { archived: true } : {};
   const remove = useDeleteMutation(() => void navigate({ to: '/', search: backSearch }));
   const path = { id: receipt.id };
   const busy = archive.isPending || unarchive.isPending || remove.isPending;
@@ -65,8 +67,10 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
         className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ArrowLeft className="size-4" aria-hidden />
-        {archived ? t('receipts.archived') : t('receipts.active')}
+        {trashed ? t('trash.tab') : archived ? t('receipts.archived') : t('receipts.active')}
       </Link>
+
+      {trashed && <TrashedBanner receipt={receipt} onPurged={() => void navigate({ to: '/', search: backSearch })} />}
 
       {editing && <ReceiptForm receipt={receipt} onDone={() => setEditing(false)} />}
 
@@ -78,10 +82,12 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
                 <h1 className="text-2xl font-semibold break-words">{receipt.name}</h1>
                 {receipt.store && <p className="text-slate-600 dark:text-slate-400">{receipt.store}</p>}
               </div>
-              <button type="button" className={buttonClass} onClick={() => setEditing(true)}>
-                <Pencil className="size-4" aria-hidden />
-                {t('detail.edit')}
-              </button>
+              {!trashed && (
+                <button type="button" className={buttonClass} onClick={() => setEditing(true)}>
+                  <Pencil className="size-4" aria-hidden />
+                  {t('detail.edit')}
+                </button>
+              )}
             </header>
 
             <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
@@ -106,31 +112,73 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
           </>
         )}
 
-        <ReceiptFiles receipt={receipt} />
+        <ReceiptFiles receipt={receipt} readOnly={trashed} />
 
-        <div className="flex flex-wrap gap-2">
-          {archived ? (
-            <button type="button" disabled={busy} className={buttonClass} onClick={() => unarchive.mutate({ path })}>
-              <ArchiveRestore className="size-4" aria-hidden />
-              {t('receipts.unarchive')}
+        {!trashed && (
+          <div className="flex flex-wrap gap-2">
+            {archived ? (
+              <button type="button" disabled={busy} className={buttonClass} onClick={() => unarchive.mutate({ path })}>
+                <ArchiveRestore className="size-4" aria-hidden />
+                {t('receipts.unarchive')}
+              </button>
+            ) : (
+              <button type="button" disabled={busy} className={buttonClass} onClick={() => void onArchive()}>
+                <Archive className="size-4" aria-hidden />
+                {t('receipts.archive')}
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={busy}
+              className={`${buttonClass} text-red-600 dark:text-red-400`}
+              onClick={() => void onDelete()}
+            >
+              <Trash2 className="size-4" aria-hidden />
+              {t('receipts.delete')}
             </button>
-          ) : (
-            <button type="button" disabled={busy} className={buttonClass} onClick={() => void onArchive()}>
-              <Archive className="size-4" aria-hidden />
-              {t('receipts.archive')}
-            </button>
-          )}
-          <button
-            type="button"
-            disabled={busy}
-            className={`${buttonClass} text-red-600 dark:text-red-400`}
-            onClick={() => void onDelete()}
-          >
-            <Trash2 className="size-4" aria-hidden />
-            {t('receipts.delete')}
-          </button>
-        </div>
+          </div>
+        )}
       </article>
+    </div>
+  );
+}
+
+/** A trashed receipt is read-only; restore it or delete it for good from here. */
+function TrashedBanner({ receipt, onPurged }: { receipt: ReceiptDto; onPurged: () => void }) {
+  const { t, i18n } = useTranslation();
+  const { restore, deletePermanently } = useTrashMutations();
+  const [dialogNode, openDialog] = useDialog();
+  const path = { id: receipt.id };
+  const busy = restore.isPending || deletePermanently.isPending;
+
+  const onDelete = async () => {
+    if (await confirmDeletePermanently(openDialog, receipt.name, t)) {
+      deletePermanently.mutate({ path }, { onSuccess: onPurged });
+    }
+  };
+
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/40"
+    >
+      {dialogNode}
+      <p className="mr-auto">
+        {t('trash.banner', { date: formatTimestamp(purgeDate(receipt.deletedAt!), i18n.language) })}
+      </p>
+      <button type="button" disabled={busy} className={buttonClass} onClick={() => restore.mutate({ path })}>
+        <RotateCcw className="size-4" aria-hidden />
+        {t('trash.restore')}
+      </button>
+      <button
+        type="button"
+        disabled={busy}
+        className={`${buttonClass} text-red-600 dark:text-red-400`}
+        onClick={() => void onDelete()}
+      >
+        <Trash2 className="size-4" aria-hidden />
+        {t('trash.deletePermanently')}
+      </button>
     </div>
   );
 }

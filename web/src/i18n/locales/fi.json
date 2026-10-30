@@ -129,7 +129,7 @@
     "confirmTitle": "Poistetaanko pysyvästi?",
     "confirmBody": "\"{{name}}\" ja sen tiedostot poistetaan lopullisesti. Tätä ei voi perua.",
     "deletedAt": "Poistettu",
-    "purgeOn": "Poistuu pysyvästi"
+    "banner": "Kuitti on roskakorissa ja poistetaan pysyvästi {{date}}."
   },
   "toast": {
     "undo": "Peru",

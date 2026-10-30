@@ -30,3 +30,10 @@ export function fileProblems(files: File[], existing = 0): ('tooMany' | 'tooLarg
   if (files.reduce((sum, f) => sum + f.size, 0) > MAX_UPLOAD_BYTES) problems.push('totalTooLarge');
   return problems;
 }
+
+/** When the API's purge removes a receipt deleted at `deletedAt` for good. */
+export function purgeDate(deletedAt: string): string {
+  const date = new Date(deletedAt);
+  date.setDate(date.getDate() + TRASH_DAYS);
+  return date.toISOString();
+}
