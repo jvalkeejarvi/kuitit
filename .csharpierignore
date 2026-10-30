@@ -1,0 +1,9 @@
+# Generated; never hand-edited.
+**/Migrations/
+
+# C# only. CSharpier also formats XML (MSBuild, slnx).
+**/*.csproj
+**/*.props
+**/*.targets
+**/*.slnx
+**/*.xml
