@@ -20,6 +20,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
         receipt.Property(r => r.OwnerSub).HasMaxLength(200);
         receipt.Property(r => r.OwnerEmail).HasMaxLength(320);
         receipt.Property(r => r.Name).HasMaxLength(ReceiptRules.MaxNameLength);
+        receipt.Property(r => r.Store).HasMaxLength(ReceiptRules.MaxStoreLength);
+        receipt.Property(r => r.Description).HasMaxLength(ReceiptRules.MaxDescriptionLength);
         receipt.Property(r => r.FileName).HasMaxLength(255);
         receipt.Property(r => r.ContentType).HasMaxLength(100);
         receipt.Property(r => r.StorageKey).HasMaxLength(100);

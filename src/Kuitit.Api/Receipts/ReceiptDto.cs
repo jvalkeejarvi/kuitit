@@ -5,6 +5,8 @@ namespace Kuitit.Api.Receipts;
 public sealed record ReceiptDto(
     Guid Id,
     string Name,
+    string? Store,
+    string? Description,
     DateOnly PurchasedOn,
     int WarrantyMonths,
     DateOnly ExpiresOn,
@@ -19,6 +21,8 @@ public sealed record ReceiptDto(
         new(
             r.Id,
             r.Name,
+            r.Store,
+            r.Description,
             r.PurchasedOn,
             r.WarrantyMonths,
             r.ExpiresOn,

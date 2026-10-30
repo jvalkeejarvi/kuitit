@@ -107,6 +107,22 @@
                         "$ref": "#/components/schemas/IFormFile"
                       }
                     }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "store": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "description": {
+                        "type": "string"
+                      }
+                    }
                   }
                 ]
               }
@@ -134,6 +150,62 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/receipts/{id}": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "GetReceipt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "DeleteReceipt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -229,30 +301,6 @@
           }
         }
       }
-    },
-    "/api/receipts/{id}": {
-      "delete": {
-        "tags": [
-          "Receipts"
-        ],
-        "operationId": "DeleteReceipt",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -328,6 +376,8 @@
         "required": [
           "id",
           "name",
+          "store",
+          "description",
           "purchasedOn",
           "warrantyMonths",
           "expiresOn",
@@ -345,6 +395,18 @@
           },
           "name": {
             "type": "string"
+          },
+          "store": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "purchasedOn": {
             "type": "string",

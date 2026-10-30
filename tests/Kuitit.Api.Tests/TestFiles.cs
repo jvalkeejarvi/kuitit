@@ -16,17 +16,30 @@ internal static class TestFiles
         string warrantyMonths = "24",
         byte[]? file = null,
         string fileName = "receipt.pdf",
-        string declaredType = "application/pdf"
+        string declaredType = "application/pdf",
+        string? store = null,
+        string? description = null
     )
     {
         var content = new ByteArrayContent(file ?? Pdf);
         content.Headers.ContentType = new MediaTypeHeaderValue(declaredType);
-        return new MultipartFormDataContent
+        var form = new MultipartFormDataContent
         {
             { new StringContent(name), "name" },
             { new StringContent(purchasedOn), "purchasedOn" },
             { new StringContent(warrantyMonths), "warrantyMonths" },
             { content, "file", fileName },
         };
+        if (store is not null)
+        {
+            form.Add(new StringContent(store), "store");
+        }
+
+        if (description is not null)
+        {
+            form.Add(new StringContent(description), "description");
+        }
+
+        return form;
     }
 }

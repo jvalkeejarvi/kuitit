@@ -66,8 +66,55 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         receipt.ContentType.Should().Be("application/pdf");
         receipt.FileName.Should().Be("receipt.pdf");
         receipt.CreatedAt.Should().Be(_factory.Time.GetUtcNow());
+        receipt.Store.Should().BeNull();
+        receipt.Description.Should().BeNull();
         receipt.ArchivedAt.Should().BeNull();
         response.Headers.Location!.ToString().Should().Be($"/api/receipts/{receipt.Id}");
+    }
+
+    [Fact]
+    public async Task Create_trims_store_and_description_and_get_returns_them()
+    {
+        var response = await _alice.PostAsync(
+            "/api/receipts",
+            TestFiles.Form(store: "  Gigantti  ", description: " 15\" model\nSerial ABC123 "),
+            Ct
+        );
+        var created = (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
+
+        var receipt = await _alice.GetFromJsonAsync<ReceiptDto>($"/api/receipts/{created.Id}", Ct);
+
+        receipt.Should().BeEquivalentTo(created);
+        receipt!.Store.Should().Be("Gigantti");
+        receipt.Description.Should().Be("15\" model\nSerial ABC123");
+    }
+
+    [Fact]
+    public async Task Blank_store_and_description_are_stored_as_null()
+    {
+        var response = await _alice.PostAsync("/api/receipts", TestFiles.Form(store: " ", description: ""), Ct);
+
+        var receipt = (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
+        receipt.Store.Should().BeNull();
+        receipt.Description.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Rejects_store_and_description_over_the_limit()
+    {
+        var store = await _alice.PostAsync(
+            "/api/receipts",
+            TestFiles.Form(store: new string('a', ReceiptRules.MaxStoreLength + 1)),
+            Ct
+        );
+        var description = await _alice.PostAsync(
+            "/api/receipts",
+            TestFiles.Form(description: new string('a', ReceiptRules.MaxDescriptionLength + 1)),
+            Ct
+        );
+
+        await ShouldBeValidationErrorAsync(store, "store");
+        await ShouldBeValidationErrorAsync(description, "description");
     }
 
     [Fact]
@@ -87,6 +134,7 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         var receipt = await CreateAsync(_alice);
 
         (await ListAsync(_bob)).Should().BeEmpty();
+        (await _bob.GetAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
         (await _bob.GetAsync($"/api/receipts/{receipt.Id}/file", Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
         (await _bob.PostAsync($"/api/receipts/{receipt.Id}/archive", null, Ct))
             .StatusCode.Should()

@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { archiveReceipt, createReceipt, deleteReceipt, getMe, getReceiptFile, listReceipts, type Options, unarchiveReceipt } from '../sdk.gen';
-import type { ArchiveReceiptData, ArchiveReceiptResponse, CreateReceiptData, CreateReceiptError, CreateReceiptResponse, DeleteReceiptData, DeleteReceiptResponse, GetMeData, GetMeResponse, GetReceiptFileData, ListReceiptsData, ListReceiptsResponse, UnarchiveReceiptData, UnarchiveReceiptResponse } from '../types.gen';
+import { archiveReceipt, createReceipt, deleteReceipt, getMe, getReceipt, getReceiptFile, listReceipts, type Options, unarchiveReceipt } from '../sdk.gen';
+import type { ArchiveReceiptData, ArchiveReceiptResponse, CreateReceiptData, CreateReceiptError, CreateReceiptResponse, DeleteReceiptData, DeleteReceiptResponse, GetMeData, GetMeResponse, GetReceiptData, GetReceiptFileData, GetReceiptResponse, ListReceiptsData, ListReceiptsResponse, UnarchiveReceiptData, UnarchiveReceiptResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -115,6 +115,38 @@ export const createReceiptMutation = (options?: Partial<Options<CreateReceiptDat
     return mutationOptions;
 };
 
+export const deleteReceiptMutationKey = (options?: Partial<Options<DeleteReceiptData>>) => createMutationKey('deleteReceipt', options);
+
+export const deleteReceiptMutation = (options?: Partial<Options<DeleteReceiptData>>): UseMutationOptions<DeleteReceiptResponse, DefaultError, Options<DeleteReceiptData>> => {
+    const mutationOptions: UseMutationOptions<DeleteReceiptResponse, DefaultError, Options<DeleteReceiptData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteReceipt({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: deleteReceiptMutationKey(options)
+    };
+    return mutationOptions;
+};
+
+export const getReceiptQueryKey = (options: Options<GetReceiptData>) => createQueryKey('getReceipt', options);
+
+export const getReceiptOptions = (options: Options<GetReceiptData>) => queryOptions<GetReceiptResponse, DefaultError, GetReceiptResponse, ReturnType<typeof getReceiptQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getReceipt({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getReceiptQueryKey(options)
+});
+
 export const getReceiptFileQueryKey = (options: Options<GetReceiptFileData>) => createQueryKey('getReceiptFile', options);
 
 export const getReceiptFileOptions = (options: Options<GetReceiptFileData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getReceiptFileQueryKey>>({
@@ -160,23 +192,6 @@ export const unarchiveReceiptMutation = (options?: Partial<Options<UnarchiveRece
             return data;
         },
         mutationKey: unarchiveReceiptMutationKey(options)
-    };
-    return mutationOptions;
-};
-
-export const deleteReceiptMutationKey = (options?: Partial<Options<DeleteReceiptData>>) => createMutationKey('deleteReceipt', options);
-
-export const deleteReceiptMutation = (options?: Partial<Options<DeleteReceiptData>>): UseMutationOptions<DeleteReceiptResponse, DefaultError, Options<DeleteReceiptData>> => {
-    const mutationOptions: UseMutationOptions<DeleteReceiptResponse, DefaultError, Options<DeleteReceiptData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await deleteReceipt({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        },
-        mutationKey: deleteReceiptMutationKey(options)
     };
     return mutationOptions;
 };

@@ -25,6 +25,8 @@ export type MeDto = {
 export type ReceiptDto = {
     id: string;
     name: string;
+    store: null | string;
+    description: null | string;
     purchasedOn: string;
     warrantyMonths: number;
     expiresOn: string;
@@ -78,6 +80,10 @@ export type CreateReceiptData = {
         warrantyMonths: number;
     } & {
         file: IFormFile;
+    } & {
+        store?: string;
+    } & {
+        description?: string;
     };
     path?: never;
     query?: never;
@@ -101,6 +107,49 @@ export type CreateReceiptResponses = {
 };
 
 export type CreateReceiptResponse = CreateReceiptResponses[keyof CreateReceiptResponses];
+
+export type DeleteReceiptData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}';
+};
+
+export type DeleteReceiptResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteReceiptResponse = DeleteReceiptResponses[keyof DeleteReceiptResponses];
+
+export type GetReceiptData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}';
+};
+
+export type GetReceiptErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetReceiptResponses = {
+    /**
+     * OK
+     */
+    200: ReceiptDto;
+};
+
+export type GetReceiptResponse = GetReceiptResponses[keyof GetReceiptResponses];
 
 export type GetReceiptFileData = {
     body?: never;
@@ -167,21 +216,3 @@ export type UnarchiveReceiptResponses = {
 };
 
 export type UnarchiveReceiptResponse = UnarchiveReceiptResponses[keyof UnarchiveReceiptResponses];
-
-export type DeleteReceiptData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/receipts/{id}';
-};
-
-export type DeleteReceiptResponses = {
-    /**
-     * No Content
-     */
-    204: void;
-};
-
-export type DeleteReceiptResponse = DeleteReceiptResponses[keyof DeleteReceiptResponses];

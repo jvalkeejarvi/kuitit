@@ -34,6 +34,10 @@ namespace Kuitit.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateOnly>("ExpiresOn")
                         .HasColumnType("TEXT");
 
@@ -71,6 +75,10 @@ namespace Kuitit.Api.Data.Migrations
                     b.Property<string>("StorageKey")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Store")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("WarrantyMonths")

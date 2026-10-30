@@ -19,6 +19,7 @@ internal static class ReceiptEndpoints
         var receipts = api.MapGroup("/receipts").WithTags("Receipts");
         receipts.MapGet("/", ListAsync).WithName("ListReceipts");
         receipts.MapPost("/", CreateAsync).WithName("CreateReceipt").DisableAntiforgery();
+        receipts.MapGet("/{id:guid}", GetAsync).WithName("GetReceipt");
         receipts.MapGet("/{id:guid}/file", GetFileAsync).WithName("GetReceiptFile");
         receipts
             .MapPost(
@@ -54,6 +55,8 @@ internal static class ReceiptEndpoints
         [FromForm] DateOnly purchasedOn,
         [FromForm] int warrantyMonths,
         IFormFile file,
+        [FromForm] string? store,
+        [FromForm] string? description,
         AppDbContext db,
         IFileStore files,
         ICurrentUser currentUser,
@@ -70,6 +73,18 @@ internal static class ReceiptEndpoints
         else if (name.Length > ReceiptRules.MaxNameLength)
         {
             errors["name"] = [$"Name must be at most {ReceiptRules.MaxNameLength} characters."];
+        }
+
+        store = NullIfBlank(store);
+        if (store?.Length > ReceiptRules.MaxStoreLength)
+        {
+            errors["store"] = [$"Store must be at most {ReceiptRules.MaxStoreLength} characters."];
+        }
+
+        description = NullIfBlank(description);
+        if (description?.Length > ReceiptRules.MaxDescriptionLength)
+        {
+            errors["description"] = [$"Description must be at most {ReceiptRules.MaxDescriptionLength} characters."];
         }
 
         // A day of slack: the client's local date can be ahead of UTC.
@@ -118,6 +133,8 @@ internal static class ReceiptEndpoints
             OwnerSub = user.Subject,
             OwnerEmail = user.Email,
             Name = name,
+            Store = store,
+            Description = description,
             FileName = SafeFileName(file.FileName, type.Extension),
             ContentType = type.ContentType,
             StorageKey = $"{id:N}{type.Extension}",
@@ -143,6 +160,16 @@ internal static class ReceiptEndpoints
         }
 
         return TypedResults.Created($"/api/receipts/{id}", ReceiptDto.From(receipt));
+    }
+
+    private static async Task<Results<Ok<ReceiptDto>, NotFound>> GetAsync(
+        Guid id,
+        AppDbContext db,
+        CancellationToken ct
+    )
+    {
+        var receipt = await db.Receipts.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+        return receipt is null ? TypedResults.NotFound() : TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
     private static async Task<Results<FileStreamHttpResult, NotFound>> GetFileAsync(
@@ -210,6 +237,8 @@ internal static class ReceiptEndpoints
         var read = await stream.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, ct);
         return FileSignature.Detect(header.AsSpan(0, read));
     }
+
+    private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     /// <summary>Display name only; never used as a path.</summary>
     private static string SafeFileName(string fileName, string extension)
