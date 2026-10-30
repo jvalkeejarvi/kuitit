@@ -34,7 +34,8 @@ export function Header({ user }: { user: string | undefined }) {
   return (
     <header
       ref={headerRef}
-      className="relative border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+      // Sticky: stays at the top while the list scrolls (and anchors the phone menu panel below it).
+      className="sticky top-0 z-30 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
         <span className="mr-auto text-lg font-bold text-brand dark:text-teal-400">{t('app.title')}</span>
