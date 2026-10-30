@@ -82,11 +82,12 @@ function ReceiptsPage() {
   return (
     <div className="space-y-4">
       {/* From sm up the toolbar sticks under the top bar (and the table header under it); --toolbar-h feeds that.
-          It absorbs main's top padding and the gap below it (-mt-6/pt-6, -mb-4/pb-4), so the spacing above the
-          tabs and above the table is the same at rest and when stuck, and its background never covers the table. */}
+          It absorbs main's top padding (-mt-6/pt-6) and makes the gap below it with its own padding (pb-4, mb-0
+          overriding space-y's margin), so the table starts right at its bottom edge: the spacing is the same at
+          rest and when stuck, and the sticky header row's offset equals its natural position. */}
       <div
         ref={toolbarRef}
-        className="flex flex-col gap-3 bg-slate-50 sm:sticky sm:top-(--header-h) sm:z-20 sm:-mt-6 sm:-mb-4 sm:flex-row sm:items-center sm:justify-between sm:pt-6 sm:pb-4 dark:bg-slate-950"
+        className="flex flex-col gap-3 bg-slate-50 sm:sticky sm:top-(--header-h) sm:z-20 sm:-mt-6 sm:mb-0 sm:flex-row sm:items-center sm:justify-between sm:pt-6 sm:pb-4 dark:bg-slate-950"
       >
         {/* Phones: full width, three equal parts (a segmented control); from sm up: left-aligned with the table. */}
         <nav className="flex gap-1 rounded-lg bg-slate-200 p-1 sm:w-fit dark:bg-slate-900">
