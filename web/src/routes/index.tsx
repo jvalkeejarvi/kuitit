@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { listReceiptsOptions, listTrashOptions } from '@/api/client/@tanstack/react-query.gen';
@@ -13,6 +12,8 @@ import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
 const searchSchema = z.object({
   archived: z.boolean().optional(),
   trash: z.boolean().optional(),
+  /** The add form is open (the header's + links here from any page). */
+  add: z.boolean().optional(),
   sort: z.enum(sortColumns).optional(),
   desc: z.boolean().optional(),
 });
@@ -61,44 +62,29 @@ function ReceiptsPage() {
     enabled: tab !== 'trash',
   });
   const { data: trash = noReceipts } = useQuery({ ...listTrashOptions(), enabled: tab === 'trash' });
-  const [adding, setAdding] = useState(false);
   const shown = tab === 'trash' ? trash : receipts;
 
   return (
     <div className="space-y-4">
-      {/* One row when it fits (tabs left, button right); otherwise wrap-reverse puts the button on a line above,
-          starting at the left. */}
-      <div className="flex flex-wrap-reverse items-center gap-3">
-        <nav className="mr-auto flex gap-1 rounded-lg bg-slate-200 p-1 dark:bg-slate-900">
-          {tabs.map(([id, label, params]) => (
-            <Link
-              key={id}
-              to="/"
-              search={prev => ({ ...prev, archived: undefined, trash: undefined, ...params })}
-              className={`${tabClass} ${tab === id ? activeTab : inactiveTab}`}
-            >
-              {t(label)}
-            </Link>
-          ))}
-        </nav>
-        {/* On every tab: hiding it on one would shift the tabs on phones, where it has its own line. */}
-        {!adding && (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="rounded-md bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark"
+      <nav className="flex w-fit gap-1 rounded-lg bg-slate-200 p-1 dark:bg-slate-900">
+        {tabs.map(([id, label, params]) => (
+          <Link
+            key={id}
+            to="/"
+            search={prev => ({ ...prev, archived: undefined, trash: undefined, ...params })}
+            className={`${tabClass} ${tab === id ? activeTab : inactiveTab}`}
           >
-            {t('receipts.add')}
-          </button>
-        )}
-      </div>
+            {t(label)}
+          </Link>
+        ))}
+      </nav>
 
-      {adding && (
+      {search.add && (
         <ReceiptForm
-          onDone={() => setAdding(false)}
+          onDone={() => void navigate({ search: prev => ({ ...prev, add: undefined }) })}
           // New receipts are active: show them, wherever adding started.
           onSaved={() =>
-            tab !== 'active' && void navigate({ search: prev => ({ ...prev, archived: undefined, trash: undefined }) })
+            void navigate({ search: prev => ({ ...prev, add: undefined, archived: undefined, trash: undefined }) })
           }
         />
       )}

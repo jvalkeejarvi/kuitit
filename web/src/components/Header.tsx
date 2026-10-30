@@ -1,4 +1,5 @@
-import { Menu, X } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { Menu, Plus, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languages, type Language } from '@/i18n';
@@ -35,6 +36,18 @@ export function Header({ user }: { user: string | undefined }) {
     >
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
         <span className="mr-auto text-lg font-bold text-brand dark:text-teal-400">{t('app.title')}</span>
+        {user !== undefined && (
+          // The app's main action, always in the same place: a round + on phones, + with text from sm up.
+          <Link
+            to="/"
+            search={prev => ({ ...prev, add: true })}
+            title={t('receipts.add')}
+            className="inline-flex size-9 items-center justify-center gap-1.5 rounded-full bg-brand font-medium text-white hover:bg-brand-dark sm:size-auto sm:rounded-md sm:px-3 sm:py-1.5 sm:text-sm"
+          >
+            <Plus className="size-5" aria-hidden />
+            <span className="sr-only sm:not-sr-only">{t('receipts.add')}</span>
+          </Link>
+        )}
         <button
           type="button"
           aria-expanded={open}
