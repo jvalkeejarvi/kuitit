@@ -127,7 +127,7 @@ function TrashActions({ receipt }: { receipt: ReceiptDto }) {
         title={t('trash.deletePermanently')}
         disabled={busy}
         onClick={() => void onDelete()}
-        className={`${iconButtonClass} hover:text-red-600 dark:hover:text-red-400`}
+        className="rounded p-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
       >
         <Trash2 className="size-5" aria-hidden />
       </button>
