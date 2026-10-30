@@ -1,0 +1,33 @@
+# Try the production image locally with a mock IdP (any username signs in):
+#   dotnet publish src/Kuitit.Api -c Release -t:PublishContainer --os linux --arch arm64 -p:ContainerImageTag=local
+#   docker compose -f compose.local.yaml up        # then open http://localhost:8080
+# Use --arch x64 on an Intel machine. Data goes to ./.data/local-image.
+services:
+  oidc:
+    image: ghcr.io/navikt/mock-oauth2-server:6.1.4
+    environment:
+      SERVER_PORT: "8090"
+      JSON_CONFIG: '{"interactiveLogin": true, "httpServer": "NettyWrapper"}'
+    ports:
+      - "127.0.0.1:8090:8090"
+      # Kuitit's port: it shares this container's network (below).
+      - "127.0.0.1:8080:8080"
+
+  kuitit:
+    image: kuitit:local
+    # Same network namespace as the IdP, so http://localhost:8090 is the same issuer for the browser and the app.
+    network_mode: service:oidc
+    depends_on: [oidc]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./.data/local-image:/data
+    environment:
+      Auth__Authority: http://localhost:8090/default
+      Auth__ClientId: kuitit-local
+      Auth__ClientSecret: local-secret
+      Auth__RequireHttpsMetadata: "false"
+      Auth__AllowedUsers__0: "*"

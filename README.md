@@ -62,6 +62,17 @@ TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) s
 | `ConnectionStrings__App` | Optional DB connection string override |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional. Exports traces, metrics and logs over OTLP (set automatically by Aspire in dev). |
 
+### Testing the production image locally
+
+Builds the image for your machine and runs it with the mock IdP (any username signs in, `*` allowlist):
+
+```sh
+dotnet publish src/Kuitit.Api -c Release -t:PublishContainer --os linux --arch arm64 -p:ContainerImageTag=local
+docker compose -f compose.local.yaml up          # http://localhost:8080
+```
+
+Use `--arch x64` on Intel. Data goes to `./.data/local-image`. Stop Aspire first; both use port 8090 for the IdP.
+
 ## Deployment (Synology DSM 7)
 
 Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
