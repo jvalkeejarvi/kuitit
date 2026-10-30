@@ -79,6 +79,23 @@ describe('AddReceiptForm', () => {
     });
   });
 
+  it('sends trimmed store and description', async () => {
+    vi.mocked(createReceipt).mockResolvedValue({ data: {} } as never);
+    const onDone = renderForm();
+
+    await userEvent.type(screen.getByLabelText('Name'), 'Laptop');
+    await userEvent.type(screen.getByLabelText('Store'), ' Gigantti ');
+    await userEvent.type(screen.getByLabelText('Description'), 'Serial ABC123{enter}Extra warranty ');
+    await userEvent.upload(screen.getByLabelText('Receipt'), new File(['x'], 'r.pdf', { type: 'application/pdf' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(vi.mocked(createReceipt).mock.calls[0]![0].body).toMatchObject({
+      store: 'Gigantti',
+      description: 'Serial ABC123\nExtra warranty',
+    });
+  });
+
   it('rejects unsupported file types', async () => {
     renderForm();
 

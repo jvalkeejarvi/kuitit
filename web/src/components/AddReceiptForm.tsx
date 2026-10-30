@@ -6,9 +6,11 @@ import { createReceiptMutation, listReceiptsQueryKey } from '@/api/client/@tanst
 import { addMonths, formatDate, today } from '@/lib/dates';
 import {
   isAcceptedFile,
+  MAX_DESCRIPTION_LENGTH,
   MAX_FILE_BYTES,
   MAX_FILE_MB,
   MAX_NAME_LENGTH,
+  MAX_STORE_LENGTH,
   MAX_WARRANTY_MONTHS,
   MIN_WARRANTY_MONTHS,
 } from '@/lib/receiptRules';
@@ -33,6 +35,14 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
         .trim()
         .min(1, t('form.errors.nameRequired'))
         .max(MAX_NAME_LENGTH, t('form.errors.nameTooLong', { max: MAX_NAME_LENGTH })),
+      store: z
+        .string()
+        .trim()
+        .max(MAX_STORE_LENGTH, t('form.errors.storeTooLong', { max: MAX_STORE_LENGTH })),
+      description: z
+        .string()
+        .trim()
+        .max(MAX_DESCRIPTION_LENGTH, t('form.errors.descriptionTooLong', { max: MAX_DESCRIPTION_LENGTH })),
       purchasedOn: z
         .string()
         .min(1, t('form.errors.purchasedOnRequired'))
@@ -60,6 +70,8 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
   const form = useForm({
     defaultValues: {
       name: '',
+      store: '',
+      description: '',
       purchasedOn: today(),
       warrantyAmount: 2,
       warrantyUnit: 'years' as Unit,
@@ -70,6 +82,8 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
       await create.mutateAsync({
         body: {
           name: value.name.trim(),
+          store: value.store.trim() || undefined,
+          description: value.description.trim() || undefined,
           purchasedOn: value.purchasedOn,
           warrantyMonths: toMonths(value.warrantyAmount, value.warrantyUnit),
           file: value.file!,
@@ -99,6 +113,22 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
               className={inputClass}
               placeholder={t('form.namePlaceholder')}
               maxLength={MAX_NAME_LENGTH}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={e => field.handleChange(e.target.value)}
+            />
+          </Field>
+        )}
+      </form.Field>
+
+      <form.Field name="store">
+        {field => (
+          <Field label={t('form.store')} id={field.name} errors={field.state.meta.errors}>
+            <input
+              id={field.name}
+              className={inputClass}
+              placeholder={t('form.storePlaceholder')}
+              maxLength={MAX_STORE_LENGTH}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={e => field.handleChange(e.target.value)}
@@ -165,6 +195,23 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
           return <p className="text-sm text-slate-600 dark:text-slate-400">{t('form.expiresPreview', { date })}</p>;
         }}
       </form.Subscribe>
+
+      <form.Field name="description">
+        {field => (
+          <Field label={t('form.description')} id={field.name} errors={field.state.meta.errors}>
+            <textarea
+              id={field.name}
+              rows={3}
+              className={inputClass}
+              placeholder={t('form.descriptionPlaceholder')}
+              maxLength={MAX_DESCRIPTION_LENGTH}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={e => field.handleChange(e.target.value)}
+            />
+          </Field>
+        )}
+      </form.Field>
 
       <form.Field name="file">
         {field => (

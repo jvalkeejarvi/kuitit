@@ -1,5 +1,7 @@
 // Mirrors Kuitit.Api ReceiptRules; the API re-validates everything.
 export const MAX_NAME_LENGTH = 200;
+export const MAX_STORE_LENGTH = 200;
+export const MAX_DESCRIPTION_LENGTH = 2000;
 export const MAX_FILE_MB = 20;
 export const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 export const MIN_WARRANTY_MONTHS = 1;
