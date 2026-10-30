@@ -13,7 +13,7 @@ permissions:
 env:
   IMAGE_REPOSITORY: ${{ github.repository_owner }}/kuitit
   # Each release is 3 package versions (index + amd64 + arm64), so this keeps the last 3 releases.
-  # GHCR free tier has 500 MB for private packages; the chiseled base layers are shared between releases.
+  # The package is public (see README), so storage is free; retention just keeps the version list short.
   KEEP_VERSIONS: 9
 
 jobs:

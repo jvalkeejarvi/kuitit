@@ -73,8 +73,7 @@ TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) s
    `localhost:8080`. Under Custom Header add WebSocket/`X-Forwarded-*` headers. Use a Let's Encrypt cert.
    Uploads are up to 20 MB; raise the proxy body size if uploads fail with 413.
 4. **Container Manager** > Project > Create: use `compose.yaml` from this repo and a `.env` based on
-   `.env.example`. Log in to GHCR once if the image is private:
-   `docker login ghcr.io -u <github user>` with a PAT that has `read:packages`.
+   `.env.example`. The image is public, so no registry login is needed.
 5. Update: bump `KUITIT_VERSION` in `.env`, then `docker compose pull && docker compose up -d`. Migrations run at
    startup, so take a backup first.
 
@@ -108,7 +107,11 @@ git tag v0.1.0 && git push origin v0.1.0
 ```
 
 The Release workflow builds `ghcr.io/jvalkeejarvi/kuitit:0.1.0` (+ `latest`) for `linux/amd64` and
-`linux/arm64` and keeps the last 3 releases (GHCR free tier: 500 MB for private packages).
+`linux/arm64` and keeps the last 3 releases.
+
+After the first release, make the image public once: GitHub > Packages > `kuitit` > Package settings > Change
+visibility > Public. It contains no secrets (configuration comes from `.env`), and the NAS can then pull it
+without a GitHub token. Public packages also don't count toward the GHCR storage quota.
 
 There is no Dockerfile: the .NET SDK builds the image (settings in `src/Kuitit.Api/Kuitit.Api.csproj`) and runs
 `bun run build` first to put the SPA in `wwwroot`. Build one locally into Docker with:
