@@ -1,0 +1,27 @@
+# Synology Container Manager "Project". Copy next to a .env file (see .env.example) and run:
+#   docker compose pull && docker compose up -d
+services:
+  kuitit:
+    image: ghcr.io/jvalkeejarvi/kuitit:${KUITIT_VERSION:?set KUITIT_VERSION in .env}
+    restart: unless-stopped
+    # UID:GID of the DSM service user that owns the data folder.
+    user: "${KUITIT_UID:?}:${KUITIT_GID:?}"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    # Only the DSM reverse proxy (on the host) reaches the app.
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ${KUITIT_DATA_DIR:?}:/data
+    environment:
+      Auth__Authority: ${OIDC_AUTHORITY:?}
+      Auth__ClientId: ${OIDC_CLIENT_ID:?}
+      Auth__ClientSecret: ${OIDC_CLIENT_SECRET:?}
+      Auth__AllowedUsers__0: ${ALLOWED_USER_1:?}
+      Auth__AllowedUsers__1: ${ALLOWED_USER_2:-}
+      Auth__AllowedUsers__2: ${ALLOWED_USER_3:-}
+      # Optional cap; the GC trims to this under pressure.
+      DOTNET_GCHeapHardLimit: ${DOTNET_GCHeapHardLimit:-0x8000000}

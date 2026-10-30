@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/node_modules/
+web/dist/
+.data/
+.git/
+.idea/
+.vs/
+**/*.user
+tests/
