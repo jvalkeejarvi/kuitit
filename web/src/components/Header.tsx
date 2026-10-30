@@ -15,7 +15,6 @@ export function Header({ user }: { user: string | undefined }) {
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
         <div className="mr-auto">
           <span className="text-lg font-bold text-brand dark:text-teal-400">{t('app.title')}</span>
-          <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{t('app.tagline')}</span>
         </div>
         <label className="sr-only" htmlFor="language">
           {t('language.label')}

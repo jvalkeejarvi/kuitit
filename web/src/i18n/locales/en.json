@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "Kuitit",
-    "tagline": "Warranty receipts",
+    "title": "Warranty receipts",
     "loading": "Loading...",
     "error": "Something went wrong.",
     "retry": "Try again"

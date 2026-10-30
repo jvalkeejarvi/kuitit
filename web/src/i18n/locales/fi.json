@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "Kuitit",
-    "tagline": "Takuukuitit",
+    "title": "Takuukuitit",
     "loading": "Ladataan...",
     "error": "Jokin meni vikaan.",
     "retry": "Yritä uudelleen"
