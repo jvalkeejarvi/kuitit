@@ -66,8 +66,9 @@ function ReceiptsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <nav className="mr-auto flex gap-1 rounded-lg bg-slate-200 p-1 dark:bg-slate-900">
+      {/* On phones the add button sits above the tabs (it comes later in the DOM, for desktop's left-to-right). */}
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+        <nav className="mr-auto flex w-fit gap-1 rounded-lg bg-slate-200 p-1 dark:bg-slate-900">
           {tabs.map(([id, label, params]) => (
             <Link
               key={id}
@@ -83,7 +84,7 @@ function ReceiptsPage() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="rounded-md bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark"
+            className="self-end rounded-md bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark sm:self-auto"
           >
             {t('receipts.add')}
           </button>
