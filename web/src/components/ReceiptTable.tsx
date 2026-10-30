@@ -7,7 +7,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Link } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, ArrowUpDown, CircleX } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ReceiptDto } from '@/api/client/types.gen';
@@ -80,7 +80,11 @@ export function ReceiptTable({
         sortingFn: (a, b) =>
           Number(a.getValue('expired')) - Number(b.getValue('expired')) ||
           a.original.expiresOn.localeCompare(b.original.expiresOn),
-        cell: c => (c.getValue() ? t('receipts.yes') : t('receipts.no')),
+        // Only expired rows get a mark; an empty cell reads as "not expired".
+        cell: c =>
+          c.getValue() && (
+            <CircleX role="img" aria-label={t('receipts.expired')} className="size-5 text-red-600 dark:text-red-400" />
+          ),
       }),
       column.display({
         id: 'actions',
