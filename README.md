@@ -90,8 +90,9 @@ Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
 2. **App user** (Control Panel > User): create a dedicated DSM user for the app (no admin rights, no other
    folder access). Get its UID and GID over SSH: `id <user>`.
 3. **Data folder** (Control Panel > Shared Folder > Create): name `kuitit`. Permissions: read/write for the app
-   user, administrators only otherwise. Inside it create `data` (File Station). Receipts and the database live
-   here, unencrypted at rest; DSM permissions keep other users out. (DSM can only encrypt a volume when it is
+   user, administrators only otherwise. Inside it create `data` (File Station) and hand it to the app
+   user over SSH: `sudo chown -R <uid>:<gid> /volume1/kuitit/data`. Receipts and the database live here,
+   unencrypted at rest; DSM permissions keep other users out. (DSM can only encrypt a volume when it is
    created, so encrypting an existing one means rebuilding it. With an encrypted volume whose key you unlock by
    hand after boot, restart the `kuitit` project after unlocking so the container doesn't start on an empty
    path.)
