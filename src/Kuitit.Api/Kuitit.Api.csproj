@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Kuitit.Api.Tests" />
+    <InternalsVisibleTo Include="Kuitit.DevSeed" />
   </ItemGroup>
 
 </Project>

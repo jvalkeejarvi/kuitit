@@ -8,16 +8,26 @@ var oidc = builder
     .WithEnvironment("JSON_CONFIG", """{"interactiveLogin": true, "httpServer": "NettyWrapper"}""");
 var oidcEndpoint = oidc.GetEndpoint("http");
 
+var dataDir = Path.Combine(builder.AppHostDirectory, "..", "..", ".data");
+var authority = ReferenceExpression.Create($"{oidcEndpoint}/default");
+
 var api = builder
     .AddProject<Projects.Kuitit_Api>("api")
-    .WithEnvironment("DATA_DIR", Path.Combine(builder.AppHostDirectory, "..", "..", ".data"))
-    .WithEnvironment("Auth__Authority", ReferenceExpression.Create($"{oidcEndpoint}/default"))
+    .WithEnvironment("DATA_DIR", dataDir)
+    .WithEnvironment("Auth__Authority", authority)
     .WithEnvironment("Auth__ClientId", "kuitit-dev")
     .WithEnvironment("Auth__ClientSecret", "dev-secret")
     .WithEnvironment("Auth__RequireHttpsMetadata", "false")
     .WithEnvironment("Auth__AllowedUsers__0", "*")
     .WithHttpHealthCheck("/healthz")
     .WaitFor(oidc);
+
+// Sample receipts for the mock IdP user `dev`, once the API has migrated. Skipped when `dev` already has data.
+builder
+    .AddProject<Projects.Kuitit_DevSeed>("seed")
+    .WithEnvironment("DATA_DIR", dataDir)
+    .WithEnvironment("Auth__Authority", authority)
+    .WaitFor(api);
 
 builder
     .AddViteApp("web", "../../web")

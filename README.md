@@ -14,6 +14,7 @@ that would change for a cloud move (DB, files, IdP) behind configuration.
 |---|---|
 | `src/Kuitit.Api` | API + serves the built SPA from `wwwroot` |
 | `src/Kuitit.AppHost` | Aspire orchestration for local dev |
+| `tools/Kuitit.DevSeed` | Sample receipts for user `dev`, run by the AppHost |
 | `tests/Kuitit.Api.Tests` | xUnit v3 integration tests (`WebApplicationFactory`, header auth, temp SQLite) |
 | `web/` | Vite app; `web/openapi.json` is written by the API build, the TS client is generated from it |
 
@@ -29,6 +30,9 @@ dotnet run --project src/Kuitit.AppHost
 Open http://localhost:5173 (the `web` resource). The mock IdP login accepts any username (it becomes `sub`);
 enter `{"email": "you@example.com"}` in its claims box to set an email. Use two usernames to check that users
 can't see each other's receipts. Data goes to `./.data` (gitignored).
+
+Sign in as `dev` to get sample receipts (expired, expiring soon, valid, archived). The `seed` resource adds them
+when `dev` has none, so delete `./.data` to start over.
 
 Common commands:
 

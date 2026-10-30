@@ -3,6 +3,9 @@
     <Project Path="src/Kuitit.Api/Kuitit.Api.csproj" />
     <Project Path="src/Kuitit.AppHost/Kuitit.AppHost.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Kuitit.DevSeed/Kuitit.DevSeed.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Kuitit.Api.Tests/Kuitit.Api.Tests.csproj" />
   </Folder>
