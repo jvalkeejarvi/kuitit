@@ -12,6 +12,7 @@ import { useArchiveMutations, useDeleteMutation } from '@/lib/receiptMutations';
 
 export const Route = createFileRoute('/receipts/$id')({
   loader: async ({ context, params }) => {
+    if (!context.me) return;
     try {
       await context.queryClient.ensureQueryData(getReceiptOptions({ path: { id: params.id } }));
     } catch {

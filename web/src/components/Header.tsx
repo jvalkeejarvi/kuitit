@@ -5,7 +5,8 @@ import { themes, useTheme, type Theme } from '@/lib/theme';
 const selectClass =
   'rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900';
 
-export function Header({ email }: { email: string | undefined }) {
+/** `user` is the signed-in user's label (email, else name); undefined when signed out. */
+export function Header({ user }: { user: string | undefined }) {
   const { t, i18n } = useTranslation();
   const [theme, setTheme] = useTheme();
 
@@ -41,9 +42,9 @@ export function Header({ email }: { email: string | undefined }) {
             </option>
           ))}
         </select>
-        {email && (
+        {user !== undefined && (
           <form method="post" action="/auth/logout" className="flex items-center gap-2">
-            <span className="hidden text-sm text-slate-600 sm:inline dark:text-slate-400">{email}</span>
+            {user && <span className="hidden text-sm text-slate-600 sm:inline dark:text-slate-400">{user}</span>}
             <button type="submit" className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
               {t('auth.logout')}
             </button>

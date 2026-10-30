@@ -8,6 +8,8 @@
   },
   "auth": {
     "logout": "Kirjaudu ulos",
+    "signedOutTitle": "Olet kirjautunut ulos.",
+    "signIn": "Kirjaudu sisään",
     "deniedTitle": "Ei käyttöoikeutta",
     "deniedBody": "Tililläsi ei ole oikeutta käyttää tätä sovellusta.",
     "signInAgain": "Kirjaudu toisella tilillä"

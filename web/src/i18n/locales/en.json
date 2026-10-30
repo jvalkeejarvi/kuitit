@@ -8,6 +8,8 @@
   },
   "auth": {
     "logout": "Log out",
+    "signedOutTitle": "You have signed out.",
+    "signIn": "Sign in",
     "deniedTitle": "Access denied",
     "deniedBody": "Your account is not allowed to use this app.",
     "signInAgain": "Sign in with another account"

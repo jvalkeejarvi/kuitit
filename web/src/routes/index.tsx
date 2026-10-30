@@ -18,8 +18,9 @@ const searchSchema = z.object({
 export const Route = createFileRoute('/')({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => ({ archived: search.archived ?? false }),
+  // Signed out or denied: the root shows its own screen, and a 401 here would bounce to the IdP.
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(listReceiptsOptions({ query: { archived: deps.archived } })),
+    context.me && context.queryClient.ensureQueryData(listReceiptsOptions({ query: { archived: deps.archived } })),
   component: ReceiptsPage,
 });
 

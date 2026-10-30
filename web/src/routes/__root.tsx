@@ -6,7 +6,7 @@ import { getMeOptions } from '@/api/client/@tanstack/react-query.gen';
 import { loginUrl } from '@/api/setup';
 import { Header } from '@/components/Header';
 
-const searchSchema = z.object({ authError: z.string().optional() });
+const searchSchema = z.object({ authError: z.string().optional(), signedOut: z.boolean().optional() });
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   validateSearch: searchSchema,
@@ -17,6 +17,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       const me = await context.queryClient.ensureQueryData({ ...getMeOptions(), retry: false });
       return { me };
     } catch {
+      // Right after logout: show a sign-in button instead of bouncing to the IdP again.
+      if (search.signedOut) return { me: null };
       throw redirect({ href: loginUrl(location.href), reloadDocument: true });
     }
   },
@@ -26,10 +28,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootLayout() {
   const { me } = Route.useRouteContext();
+  const { signedOut } = Route.useSearch();
   return (
     <div className="min-h-dvh">
-      <Header email={me?.email} />
-      <main className="mx-auto max-w-5xl px-4 py-6">{me ? <Outlet /> : <AccessDenied />}</main>
+      <Header user={me ? me.email || me.name || '' : undefined} />
+      <main className="mx-auto max-w-5xl px-4 py-6">
+        {me ? <Outlet /> : signedOut ? <SignedOut /> : <AccessDenied />}
+      </main>
     </div>
   );
 }
@@ -42,6 +47,21 @@ function AccessDenied() {
       <p className="mt-2 text-slate-600 dark:text-slate-400">{t('auth.deniedBody')}</p>
       <a href="/auth/login?prompt=login" className="mt-4 inline-block text-brand underline dark:text-teal-400">
         {t('auth.signInAgain')}
+      </a>
+    </div>
+  );
+}
+
+function SignedOut() {
+  const { t } = useTranslation();
+  return (
+    <div className="mx-auto max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
+      <h1 className="text-xl font-semibold">{t('auth.signedOutTitle')}</h1>
+      <a
+        href={loginUrl('/')}
+        className="mt-4 inline-block rounded-md bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark"
+      >
+        {t('auth.signIn')}
       </a>
     </div>
   );

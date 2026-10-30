@@ -32,11 +32,11 @@ public sealed class AuthEndpointTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Logout_without_session_redirects_home()
+    public async Task Logout_without_session_redirects_to_signed_out_page()
     {
         var response = await _factory.CreateClientFor(null).PostAsync("/auth/logout", null, Ct);
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.ToString().Should().Be("/");
+        response.Headers.Location!.ToString().Should().Be("/?signedOut=true");
     }
 }
