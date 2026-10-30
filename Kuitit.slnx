@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Kuitit.Api/Kuitit.Api.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kuitit.Api.Tests/Kuitit.Api.Tests.csproj" />
+  </Folder>
 </Solution>
