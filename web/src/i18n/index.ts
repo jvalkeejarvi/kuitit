@@ -21,9 +21,14 @@ void i18n
     detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'], lookupLocalStorage: 'kuitit.lang' },
   });
 
-i18n.on('languageChanged', lng => {
+/** Page language (screen readers, hyphenation) and tab title follow the UI language. */
+function applyLanguage(lng: string) {
   document.documentElement.setAttribute('lang', lng);
   document.title = i18n.t('app.title');
-});
+}
+
+i18n.on('languageChanged', applyLanguage);
+// init with bundled resources finishes synchronously, before the listener above exists.
+if (i18n.isInitialized) applyLanguage(i18n.resolvedLanguage ?? i18n.language);
 
 export default i18n;
