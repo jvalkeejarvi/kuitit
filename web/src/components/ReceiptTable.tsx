@@ -12,9 +12,11 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ReceiptDto } from '@/api/client/types.gen';
 import { StatusBadge } from '@/components/StatusBadge';
+import { confirmArchive } from '@/lib/confirmations';
 import { expiryStatus, formatDate } from '@/lib/dates';
 import { sortColumns, type ReceiptSort, type SortColumn } from '@/lib/receiptSort';
 import { useArchiveMutations } from '@/lib/receiptMutations';
+import { useDialog } from '@/lib/useDialog';
 
 const column = createColumnHelper<ReceiptDto>();
 
@@ -197,21 +199,31 @@ function SortPicker({ sort, onSortChange }: { sort: ReceiptSort; onSortChange: (
 function ArchiveButton({ receipt }: { receipt: ReceiptDto }) {
   const { t } = useTranslation();
   const { archive, unarchive } = useArchiveMutations();
+  const [dialogNode, openDialog] = useDialog();
   const path = { id: receipt.id };
-  const [label, Icon, mutation] = receipt.archivedAt
-    ? [t('receipts.unarchive'), ArchiveRestore, unarchive]
-    : [t('receipts.archive'), Archive, archive];
+  const archived = receipt.archivedAt != null;
+  const label = archived ? t('receipts.unarchive') : t('receipts.archive');
+  const Icon = archived ? ArchiveRestore : Archive;
+
+  // Restoring is harmless; archiving hides the receipt from the main list, so it asks first.
+  const onClick = async () => {
+    if (archived) unarchive.mutate({ path });
+    else if (await confirmArchive(openDialog, receipt.name, t)) archive.mutate({ path });
+  };
 
   return (
-    <button
-      type="button"
-      aria-label={`${label}: ${receipt.name}`}
-      title={label}
-      disabled={archive.isPending || unarchive.isPending}
-      onClick={() => mutation.mutate({ path })}
-      className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-    >
-      <Icon className="size-5" aria-hidden />
-    </button>
+    <>
+      {dialogNode}
+      <button
+        type="button"
+        aria-label={`${label}: ${receipt.name}`}
+        title={label}
+        disabled={archive.isPending || unarchive.isPending}
+        onClick={() => void onClick()}
+        className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+      >
+        <Icon className="size-5" aria-hidden />
+      </button>
+    </>
   );
 }

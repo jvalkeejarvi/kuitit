@@ -39,7 +39,6 @@
     "archive": "Arkistoi",
     "unarchive": "Palauta",
     "delete": "Poista",
-    "confirmDelete": "Poistetaanko pysyvästi?",
     "cancel": "Peruuta",
     "status": {
       "expired": "Päättynyt",
@@ -63,6 +62,12 @@
     "years_other": "{{count}} vuotta",
     "months_one": "{{count}} kuukausi",
     "months_other": "{{count}} kuukautta"
+  },
+  "confirm": {
+    "archiveTitle": "Arkistoidaanko kuitti?",
+    "archiveBody": "\"{{name}}\" siirtyy arkistoituihin. Voit palauttaa sen myöhemmin.",
+    "deleteTitle": "Poistetaanko kuitti?",
+    "deleteBody": "\"{{name}}\" ja sen tiedosto poistetaan pysyvästi. Tätä ei voi perua."
   },
   "form": {
     "title": "Uusi kuitti",

@@ -39,7 +39,6 @@
     "archive": "Archive",
     "unarchive": "Restore",
     "delete": "Delete",
-    "confirmDelete": "Delete permanently?",
     "cancel": "Cancel",
     "status": {
       "expired": "Expired",
@@ -63,6 +62,12 @@
     "years_other": "{{count}} years",
     "months_one": "{{count}} month",
     "months_other": "{{count}} months"
+  },
+  "confirm": {
+    "archiveTitle": "Archive receipt?",
+    "archiveBody": "\"{{name}}\" moves to Archived. You can restore it later.",
+    "deleteTitle": "Delete receipt?",
+    "deleteBody": "\"{{name}}\" and its file are deleted permanently. This can't be undone."
   },
   "form": {
     "title": "New receipt",

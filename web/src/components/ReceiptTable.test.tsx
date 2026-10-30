@@ -3,10 +3,16 @@ import { createMemoryHistory, createRootRoute, createRouter, RouterProvider } fr
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
+import { archiveReceipt } from '@/api/client/sdk.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
 import i18n from '@/i18n';
 import type { ReceiptSort } from '@/lib/receiptSort';
 import { ReceiptTable } from './ReceiptTable';
+
+vi.mock('@/api/client/sdk.gen', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/api/client/sdk.gen')>()),
+  archiveReceipt: vi.fn(),
+}));
 
 const receipt = (name: string, purchasedOn: string, expiresOn: string): ReceiptDto => ({
   id: name,
@@ -83,5 +89,24 @@ describe('ReceiptTable', () => {
     // Ties on the flag fall back to expiry date.
     await userEvent.click(screen.getByRole('button', { name: /^Päättynyt/ }));
     expect(names()).toEqual(['Bike', 'älypuhelin', 'Washer']);
+  });
+
+  it('asks before archiving and archives only on confirm', async () => {
+    vi.mocked(archiveReceipt)
+      .mockReset()
+      .mockResolvedValue({ data: receipts[0] } as never);
+    await renderTable();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Arkistoi: Washer' }));
+    const dialog = screen.getByRole('dialog', { name: 'Arkistoidaanko kuitti?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Peruuta' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(archiveReceipt).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Arkistoi: Washer' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Arkistoi' }));
+    await vi.waitFor(() => expect(archiveReceipt).toHaveBeenCalledOnce());
+    expect(vi.mocked(archiveReceipt).mock.calls[0]![0].path).toEqual({ id: 'Washer' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

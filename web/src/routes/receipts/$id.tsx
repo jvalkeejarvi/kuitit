@@ -1,14 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
 import { Archive, ArchiveRestore, ArrowLeft, ExternalLink, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getReceiptOptions } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
 import { receiptFileUrl } from '@/api/setup';
 import { StatusBadge } from '@/components/StatusBadge';
+import { confirmArchive, confirmDelete } from '@/lib/confirmations';
 import { formatDate } from '@/lib/dates';
 import { useArchiveMutations, useDeleteMutation } from '@/lib/receiptMutations';
+import { useDialog } from '@/lib/useDialog';
 
 export const Route = createFileRoute('/receipts/$id')({
   loader: async ({ context, params }) => {
@@ -40,7 +41,7 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { archive, unarchive } = useArchiveMutations();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [dialogNode, openDialog] = useDialog();
   const archived = receipt.archivedAt != null;
   const backSearch = archived ? { archived: true } : {};
   const remove = useDeleteMutation(() => void navigate({ to: '/', search: backSearch }));
@@ -49,8 +50,16 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
   const fileUrl = receiptFileUrl(receipt.id);
   const lang = i18n.language;
 
+  const onArchive = async () => {
+    if (await confirmArchive(openDialog, receipt.name, t)) archive.mutate({ path });
+  };
+  const onDelete = async () => {
+    if (await confirmDelete(openDialog, receipt.name, t)) remove.mutate({ path });
+  };
+
   return (
     <div className="space-y-4">
+      {dialogNode}
       <Link
         to="/"
         search={backSearch}
@@ -110,48 +119,21 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
               {t('receipts.unarchive')}
             </button>
           ) : (
-            <button type="button" disabled={busy} className={buttonClass} onClick={() => archive.mutate({ path })}>
+            <button type="button" disabled={busy} className={buttonClass} onClick={() => void onArchive()}>
               <Archive className="size-4" aria-hidden />
               {t('receipts.archive')}
             </button>
           )}
-          {!confirmingDelete && (
-            <button
-              type="button"
-              disabled={busy}
-              className={`${buttonClass} text-red-600 dark:text-red-400`}
-              onClick={() => setConfirmingDelete(true)}
-            >
-              <Trash2 className="size-4" aria-hidden />
-              {t('receipts.delete')}
-            </button>
-          )}
-        </div>
-
-        {confirmingDelete && (
-          <div
-            role="alertdialog"
-            aria-label={t('receipts.confirmDelete')}
-            className="flex flex-wrap items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm dark:border-red-900 dark:bg-red-950/40"
+          <button
+            type="button"
+            disabled={busy}
+            className={`${buttonClass} text-red-600 dark:text-red-400`}
+            onClick={() => void onDelete()}
           >
-            <span className="mr-auto">{t('receipts.confirmDelete')}</span>
-            <button
-              type="button"
-              disabled={busy}
-              className="rounded-md bg-red-600 px-3 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              onClick={() => remove.mutate({ path })}
-            >
-              {t('receipts.delete')}
-            </button>
-            <button
-              type="button"
-              className="rounded-md px-3 py-2 hover:bg-red-100 dark:hover:bg-red-900/40"
-              onClick={() => setConfirmingDelete(false)}
-            >
-              {t('receipts.cancel')}
-            </button>
-          </div>
-        )}
+            <Trash2 className="size-4" aria-hidden />
+            {t('receipts.delete')}
+          </button>
+        </div>
       </article>
     </div>
   );
