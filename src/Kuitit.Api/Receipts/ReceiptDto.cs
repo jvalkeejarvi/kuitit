@@ -12,7 +12,8 @@ public sealed record ReceiptDto(
     DateOnly ExpiresOn,
     ReceiptFileDto[] Files,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ArchivedAt
+    DateTimeOffset? ArchivedAt,
+    DateTimeOffset? DeletedAt
 )
 {
     public static ReceiptDto From(Receipt r) =>
@@ -24,9 +25,10 @@ public sealed record ReceiptDto(
             r.PurchasedOn,
             r.WarrantyMonths,
             r.ExpiresOn,
-            [.. r.Files.OrderBy(f => f.Position).Select(ReceiptFileDto.From)],
+            [.. r.Files.Where(f => f.DeletedAt == null).OrderBy(f => f.Position).Select(ReceiptFileDto.From)],
             r.CreatedAt,
-            r.ArchivedAt
+            r.ArchivedAt,
+            r.DeletedAt
         );
 }
 

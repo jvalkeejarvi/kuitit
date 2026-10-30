@@ -12,6 +12,9 @@ public static class ReceiptRules
 
     public const int MaxFilesPerReceipt = 10;
 
+    /// <summary>Deleted receipts and removed files are kept this long before they are purged.</summary>
+    public const int TrashDays = 30;
+
     /// <summary>Total for one upload request (several files at once).</summary>
     public const long MaxUploadBytes = 60 * 1024 * 1024;
 

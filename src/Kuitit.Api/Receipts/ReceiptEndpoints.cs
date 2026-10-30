@@ -18,12 +18,14 @@ internal static class ReceiptEndpoints
 
         var receipts = api.MapGroup("/receipts").WithTags("Receipts");
         receipts.MapGet("/", ListAsync).WithName("ListReceipts");
+        receipts.MapGet("/trash", ListTrashAsync).WithName("ListTrash");
         receipts.MapPost("/", CreateAsync).WithName("CreateReceipt").DisableAntiforgery();
         receipts.MapGet("/{id:guid}", GetAsync).WithName("GetReceipt");
         receipts.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateReceipt");
         receipts.MapPost("/{id:guid}/files", AddFilesAsync).WithName("AddReceiptFiles").DisableAntiforgery();
         receipts.MapGet("/{id:guid}/files/{fileId:guid}", GetFileAsync).WithName("GetReceiptFile");
         receipts.MapDelete("/{id:guid}/files/{fileId:guid}", DeleteFileAsync).WithName("DeleteReceiptFile");
+        receipts.MapPost("/{id:guid}/files/{fileId:guid}/restore", RestoreFileAsync).WithName("RestoreReceiptFile");
         receipts
             .MapPost(
                 "/{id:guid}/archive",
@@ -38,6 +40,8 @@ internal static class ReceiptEndpoints
             )
             .WithName("UnarchiveReceipt");
         receipts.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteReceipt");
+        receipts.MapPost("/{id:guid}/restore", RestoreAsync).WithName("RestoreReceipt");
+        receipts.MapDelete("/{id:guid}/permanent", DeletePermanentlyAsync).WithName("DeleteReceiptPermanently");
 
         // Unknown API routes are 404s, not the SPA fallback.
         app.Map("/api/{**rest}", () => Results.NotFound()).ExcludeFromDescription();
@@ -50,6 +54,18 @@ internal static class ReceiptEndpoints
             .Where(r => archived ? r.ArchivedAt != null : r.ArchivedAt == null)
             .OrderBy(r => r.ExpiresOn)
             .ThenBy(r => r.Name)
+            .AsNoTracking()
+            .ToListAsync(ct);
+        return TypedResults.Ok(rows.Select(ReceiptDto.From).ToArray());
+    }
+
+    private static async Task<Ok<ReceiptDto[]>> ListTrashAsync(AppDbContext db, CancellationToken ct)
+    {
+        var rows = await db
+            .Receipts.IgnoreQueryFilters([AppDbContext.NotDeleted])
+            .Include(r => r.Files)
+            .Where(r => r.DeletedAt != null)
+            .OrderByDescending(r => r.DeletedAt)
             .AsNoTracking()
             .ToListAsync(ct);
         return TypedResults.Ok(rows.Select(ReceiptDto.From).ToArray());
@@ -200,11 +216,12 @@ internal static class ReceiptEndpoints
         return TypedResults.Stream(stream, file.ContentType, enableRangeProcessing: true);
     }
 
+    /// <summary>Removes a file from the receipt; it stays restorable until the trash is purged.</summary>
     private static async Task<Results<Ok<ReceiptDto>, NotFound, ValidationProblem>> DeleteFileAsync(
         Guid id,
         Guid fileId,
         AppDbContext db,
-        IFileStore fileStore,
+        TimeProvider time,
         CancellationToken ct
     )
     {
@@ -222,9 +239,45 @@ internal static class ReceiptEndpoints
             );
         }
 
-        receipt.Files.Remove(file);
+        file.DeletedAt = time.GetUtcNow();
         await db.SaveChangesAsync(ct);
-        await fileStore.DeleteAsync(file.StorageKey, ct);
+        return TypedResults.Ok(ReceiptDto.From(receipt));
+    }
+
+    private static async Task<Results<Ok<ReceiptDto>, NotFound, ValidationProblem>> RestoreFileAsync(
+        Guid id,
+        Guid fileId,
+        AppDbContext db,
+        CancellationToken ct
+    )
+    {
+        // Only the file's own deletion is looked past; the receipt itself must not be in the trash.
+        var receipt = await db
+            .Receipts.IgnoreQueryFilters([AppDbContext.NotDeleted])
+            .Include(r => r.Files)
+            .FirstOrDefaultAsync(r => r.Id == id && r.DeletedAt == null, ct);
+        var file = receipt?.Files.FirstOrDefault(f => f.Id == fileId);
+        if (receipt is null || file is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (file.DeletedAt is not null)
+        {
+            if (receipt.Files.Count(f => f.DeletedAt == null) >= ReceiptRules.MaxFilesPerReceipt)
+            {
+                return TypedResults.ValidationProblem(
+                    new Dictionary<string, string[]>
+                    {
+                        ["files"] = [$"A receipt can have at most {ReceiptRules.MaxFilesPerReceipt} files."],
+                    }
+                );
+            }
+
+            file.DeletedAt = null;
+            await db.SaveChangesAsync(ct);
+        }
+
         return TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
@@ -246,22 +299,54 @@ internal static class ReceiptEndpoints
         return TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
-    private static async Task<NoContent> DeleteAsync(
+    /// <summary>Moves the receipt to the trash. Idempotent.</summary>
+    private static async Task<NoContent> DeleteAsync(Guid id, AppDbContext db, TimeProvider time, CancellationToken ct)
+    {
+        var receipt = await db.Receipts.FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (receipt is not null)
+        {
+            receipt.DeletedAt = time.GetUtcNow();
+            await db.SaveChangesAsync(ct);
+        }
+
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<Results<Ok<ReceiptDto>, NotFound>> RestoreAsync(
+        Guid id,
+        AppDbContext db,
+        CancellationToken ct
+    )
+    {
+        var receipt = await db
+            .Receipts.IgnoreQueryFilters([AppDbContext.NotDeleted])
+            .Include(r => r.Files)
+            .FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (receipt is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        receipt.DeletedAt = null;
+        await db.SaveChangesAsync(ct);
+        return TypedResults.Ok(ReceiptDto.From(receipt));
+    }
+
+    /// <summary>Deletes a receipt that is already in the trash, with all its files. Idempotent.</summary>
+    private static async Task<NoContent> DeletePermanentlyAsync(
         Guid id,
         AppDbContext db,
         IFileStore fileStore,
         CancellationToken ct
     )
     {
-        var receipt = await db.Receipts.Include(r => r.Files).FirstOrDefaultAsync(r => r.Id == id, ct);
+        var receipt = await db
+            .Receipts.IgnoreQueryFilters([AppDbContext.NotDeleted])
+            .Include(r => r.Files)
+            .FirstOrDefaultAsync(r => r.Id == id && r.DeletedAt != null, ct);
         if (receipt is not null)
         {
-            db.Receipts.Remove(receipt);
-            await db.SaveChangesAsync(ct);
-            foreach (var file in receipt.Files)
-            {
-                await fileStore.DeleteAsync(file.StorageKey, ct);
-            }
+            await TrashPurger.DeleteAsync([receipt], [], db, fileStore, ct);
         }
 
         return TypedResults.NoContent();

@@ -35,6 +35,7 @@ export type ReceiptDto = {
     files: Array<ReceiptFileDto>;
     createdAt: string;
     archivedAt: null | string;
+    deletedAt: null | string;
 };
 
 export type ReceiptFileDto = {
@@ -125,6 +126,22 @@ export type CreateReceiptResponses = {
 };
 
 export type CreateReceiptResponse = CreateReceiptResponses[keyof CreateReceiptResponses];
+
+export type ListTrashData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/receipts/trash';
+};
+
+export type ListTrashResponses = {
+    /**
+     * OK
+     */
+    200: Array<ReceiptDto>;
+};
+
+export type ListTrashResponse = ListTrashResponses[keyof ListTrashResponses];
 
 export type DeleteReceiptData = {
     body?: never;
@@ -282,6 +299,38 @@ export type GetReceiptFileErrors = {
     404: unknown;
 };
 
+export type RestoreReceiptFileData = {
+    body?: never;
+    path: {
+        id: string;
+        fileId: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}/files/{fileId}/restore';
+};
+
+export type RestoreReceiptFileErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreReceiptFileError = RestoreReceiptFileErrors[keyof RestoreReceiptFileErrors];
+
+export type RestoreReceiptFileResponses = {
+    /**
+     * OK
+     */
+    200: ReceiptDto;
+};
+
+export type RestoreReceiptFileResponse = RestoreReceiptFileResponses[keyof RestoreReceiptFileResponses];
+
 export type ArchiveReceiptData = {
     body?: never;
     path: {
@@ -331,3 +380,46 @@ export type UnarchiveReceiptResponses = {
 };
 
 export type UnarchiveReceiptResponse = UnarchiveReceiptResponses[keyof UnarchiveReceiptResponses];
+
+export type RestoreReceiptData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}/restore';
+};
+
+export type RestoreReceiptErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreReceiptResponses = {
+    /**
+     * OK
+     */
+    200: ReceiptDto;
+};
+
+export type RestoreReceiptResponse = RestoreReceiptResponses[keyof RestoreReceiptResponses];
+
+export type DeleteReceiptPermanentlyData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/receipts/{id}/permanent';
+};
+
+export type DeleteReceiptPermanentlyResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteReceiptPermanentlyResponse = DeleteReceiptPermanentlyResponses[keyof DeleteReceiptPermanentlyResponses];

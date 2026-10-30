@@ -22,4 +22,7 @@ public sealed class ReceiptFile
     public int Position { get; init; }
 
     public DateTimeOffset CreatedAt { get; init; }
+
+    /// <summary>Removed from the receipt (undoable) since; purged with the trash.</summary>
+    public DateTimeOffset? DeletedAt { get; set; }
 }

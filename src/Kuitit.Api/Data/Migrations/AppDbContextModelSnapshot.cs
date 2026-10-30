@@ -28,6 +28,9 @@ namespace Kuitit.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
@@ -67,6 +70,8 @@ namespace Kuitit.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DeletedAt");
+
                     b.HasIndex("OwnerIssuer", "OwnerSub");
 
                     b.ToTable("Receipts");
@@ -84,6 +89,9 @@ namespace Kuitit.Api.Data.Migrations
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FileName")
                         .IsRequired()
@@ -105,6 +113,8 @@ namespace Kuitit.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DeletedAt");
 
                     b.HasIndex("ReceiptId");
 

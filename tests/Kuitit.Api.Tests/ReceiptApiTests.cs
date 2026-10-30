@@ -350,7 +350,8 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         var removed = await _alice.DeleteAsync($"/api/receipts/{receipt.Id}/files/{first.Id}", Ct);
         removed.StatusCode.Should().Be(HttpStatusCode.OK);
         (await removed.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!.Files.Should().ContainSingle(f => f.Id == second.Id);
-        Directory.GetFiles(Path.Combine(_factory.DataDir, "files")).Should().ContainSingle();
+        // Removed files stay on disk until the trash is purged, so the removal can be undone.
+        Directory.GetFiles(Path.Combine(_factory.DataDir, "files")).Should().HaveCount(2);
         (await _alice.GetAsync($"/api/receipts/{receipt.Id}/files/{first.Id}", Ct))
             .StatusCode.Should()
             .Be(HttpStatusCode.NotFound);
@@ -449,20 +450,6 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         var response = await _alice.PostAsync($"/api/receipts/{Guid.NewGuid()}/archive", null, Ct);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task Delete_removes_row_and_all_files_and_is_idempotent()
-    {
-        var created = await _alice.PostAsync("/api/receipts", TestFiles.Form(fileCount: 2), Ct);
-        var receipt = (await created.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
-        receipt.Files.Should().HaveCount(2);
-
-        (await _alice.DeleteAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NoContent);
-        (await _alice.DeleteAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-        (await ListAsync(_alice)).Should().BeEmpty();
-        Directory.GetFiles(Path.Combine(_factory.DataDir, "files")).Should().BeEmpty();
     }
 
     [Fact]

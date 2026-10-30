@@ -1,5 +1,6 @@
 using Kuitit.Api.Auth;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Kuitit.Api.Data;
 
@@ -8,6 +9,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     public DbSet<Receipt> Receipts => Set<Receipt>();
 
     public DbSet<ReceiptFile> ReceiptFiles => Set<ReceiptFile>();
+
+    /// <summary>
+    /// Named query filters. <see cref="Owner"/> must never be ignored in request code; <see cref="NotDeleted"/>
+    /// is ignored (IgnoreQueryFilters([NotDeleted])) only to look into the trash.
+    /// </summary>
+    public const string Owner = nameof(Owner);
+
+    public const string NotDeleted = nameof(NotDeleted);
 
     // Read by the query filter on every query, so it reflects the user of the current scope.
     private string? OwnerIssuer => currentUser.Identity?.Issuer;
@@ -26,7 +35,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
         receipt.Property(r => r.Store).HasMaxLength(ReceiptRules.MaxStoreLength);
         receipt.Property(r => r.Description).HasMaxLength(ReceiptRules.MaxDescriptionLength);
         receipt.HasIndex(r => new { r.OwnerIssuer, r.OwnerSub });
-        receipt.HasQueryFilter(r => r.OwnerIssuer == OwnerIssuer && r.OwnerSub == OwnerSub);
+        receipt.HasQueryFilter(Owner, r => r.OwnerIssuer == OwnerIssuer && r.OwnerSub == OwnerSub);
+        receipt.HasQueryFilter(NotDeleted, r => r.DeletedAt == null);
+        // Stored as a number: SQLite can't compare or sort DateTimeOffset text, and the trash needs both.
+        receipt.Property(r => r.DeletedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
+        receipt.HasIndex(r => r.DeletedAt);
         receipt
             .HasMany(r => r.Files)
             .WithOne(f => f.Receipt)
@@ -41,6 +54,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
         file.Property(f => f.ContentType).HasMaxLength(100);
         file.Property(f => f.StorageKey).HasMaxLength(100);
         // Same owner rule as receipts, so files can't be reached around it.
-        file.HasQueryFilter(f => f.Receipt!.OwnerIssuer == OwnerIssuer && f.Receipt.OwnerSub == OwnerSub);
+        file.HasQueryFilter(Owner, f => f.Receipt!.OwnerIssuer == OwnerIssuer && f.Receipt.OwnerSub == OwnerSub);
+        // Files of a trashed receipt are hidden too, so they can't be opened from outside the trash.
+        file.HasQueryFilter(NotDeleted, f => f.DeletedAt == null && f.Receipt!.DeletedAt == null);
+        file.Property(f => f.DeletedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
+        file.HasIndex(f => f.DeletedAt);
     }
 }

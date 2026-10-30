@@ -27,6 +27,9 @@ public sealed class Receipt
 
     public DateTimeOffset? ArchivedAt { get; set; }
 
+    /// <summary>In the trash since; purged for good after <see cref="ReceiptRules.TrashDays"/> days.</summary>
+    public DateTimeOffset? DeletedAt { get; set; }
+
     /// <summary>At least one; see <see cref="ReceiptFile.Position"/> for the order.</summary>
     public List<ReceiptFile> Files { get; init; } = [];
 

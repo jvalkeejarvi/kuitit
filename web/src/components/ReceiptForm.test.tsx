@@ -159,6 +159,7 @@ describe('ReceiptForm', () => {
       files: [{ id: 'f1', fileName: 'r.pdf', contentType: 'application/pdf', sizeBytes: 1 }],
       createdAt: '2026-01-01T00:00:00Z',
       archivedAt: null,
+      deletedAt: null,
     };
     vi.mocked(updateReceipt).mockResolvedValue({ data: receipt } as never);
     const onDone = renderForm(vi.fn(), receipt);

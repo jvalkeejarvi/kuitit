@@ -154,6 +154,29 @@
         }
       }
     },
+    "/api/receipts/trash": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "ListTrash",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceiptDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/receipts/{id}": {
       "get": {
         "tags": [
@@ -408,6 +431,59 @@
         }
       }
     },
+    "/api/receipts/{id}/files/{fileId}/restore": {
+      "post": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "RestoreReceiptFile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/receipts/{id}/archive": {
       "post": {
         "tags": [
@@ -472,6 +548,64 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/receipts/{id}/restore": {
+      "post": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "RestoreReceipt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/receipts/{id}/permanent": {
+      "delete": {
+        "tags": [
+          "Receipts"
+        ],
+        "operationId": "DeleteReceiptPermanently",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -563,7 +697,8 @@
           "expiresOn",
           "files",
           "createdAt",
-          "archivedAt"
+          "archivedAt",
+          "deletedAt"
         ],
         "type": "object",
         "properties": {
@@ -609,6 +744,13 @@
             "format": "date-time"
           },
           "archivedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "deletedAt": {
             "type": [
               "null",
               "string"

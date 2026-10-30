@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using Kuitit.Api.Receipts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Hosting;
@@ -57,6 +58,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Time);
+            // Advancing the fake clock would fire the background purge mid-test; tests call it directly.
+            var purger = services.Single(d => d.ImplementationType == typeof(TrashPurger));
+            services.Remove(purger);
             services
                 .AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, HeaderAuthHandler>(HeaderAuthHandler.SchemeName, null);

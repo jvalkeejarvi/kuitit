@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddReceiptFilesData, AddReceiptFilesErrors, AddReceiptFilesResponses, ArchiveReceiptData, ArchiveReceiptErrors, ArchiveReceiptResponses, CreateReceiptData, CreateReceiptErrors, CreateReceiptResponses, DeleteReceiptData, DeleteReceiptFileData, DeleteReceiptFileErrors, DeleteReceiptFileResponses, DeleteReceiptResponses, GetMeData, GetMeResponses, GetReceiptData, GetReceiptErrors, GetReceiptFileData, GetReceiptFileErrors, GetReceiptResponses, ListReceiptsData, ListReceiptsResponses, UnarchiveReceiptData, UnarchiveReceiptErrors, UnarchiveReceiptResponses, UpdateReceiptData, UpdateReceiptErrors, UpdateReceiptResponses } from './types.gen';
+import type { AddReceiptFilesData, AddReceiptFilesErrors, AddReceiptFilesResponses, ArchiveReceiptData, ArchiveReceiptErrors, ArchiveReceiptResponses, CreateReceiptData, CreateReceiptErrors, CreateReceiptResponses, DeleteReceiptData, DeleteReceiptFileData, DeleteReceiptFileErrors, DeleteReceiptFileResponses, DeleteReceiptPermanentlyData, DeleteReceiptPermanentlyResponses, DeleteReceiptResponses, GetMeData, GetMeResponses, GetReceiptData, GetReceiptErrors, GetReceiptFileData, GetReceiptFileErrors, GetReceiptResponses, ListReceiptsData, ListReceiptsResponses, ListTrashData, ListTrashResponses, RestoreReceiptData, RestoreReceiptErrors, RestoreReceiptFileData, RestoreReceiptFileErrors, RestoreReceiptFileResponses, RestoreReceiptResponses, UnarchiveReceiptData, UnarchiveReceiptErrors, UnarchiveReceiptResponses, UpdateReceiptData, UpdateReceiptErrors, UpdateReceiptResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -32,6 +32,8 @@ export const createReceipt = <ThrowOnError extends boolean = false>(options: Opt
     }
 });
 
+export const listTrash = <ThrowOnError extends boolean = false>(options?: Options<ListTrashData, ThrowOnError>): RequestResult<ListTrashResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListTrashResponses, unknown, ThrowOnError>({ url: '/api/receipts/trash', ...options });
+
 export const deleteReceipt = <ThrowOnError extends boolean = false>(options: Options<DeleteReceiptData, ThrowOnError>): RequestResult<DeleteReceiptResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteReceiptResponses, unknown, ThrowOnError>({ url: '/api/receipts/{id}', ...options });
 
 export const getReceipt = <ThrowOnError extends boolean = false>(options: Options<GetReceiptData, ThrowOnError>): RequestResult<GetReceiptResponses, GetReceiptErrors, ThrowOnError> => (options.client ?? client).get<GetReceiptResponses, GetReceiptErrors, ThrowOnError>({ url: '/api/receipts/{id}', ...options });
@@ -59,6 +61,12 @@ export const deleteReceiptFile = <ThrowOnError extends boolean = false>(options:
 
 export const getReceiptFile = <ThrowOnError extends boolean = false>(options: Options<GetReceiptFileData, ThrowOnError>): RequestResult<unknown, GetReceiptFileErrors, ThrowOnError> => (options.client ?? client).get<unknown, GetReceiptFileErrors, ThrowOnError>({ url: '/api/receipts/{id}/files/{fileId}', ...options });
 
+export const restoreReceiptFile = <ThrowOnError extends boolean = false>(options: Options<RestoreReceiptFileData, ThrowOnError>): RequestResult<RestoreReceiptFileResponses, RestoreReceiptFileErrors, ThrowOnError> => (options.client ?? client).post<RestoreReceiptFileResponses, RestoreReceiptFileErrors, ThrowOnError>({ url: '/api/receipts/{id}/files/{fileId}/restore', ...options });
+
 export const archiveReceipt = <ThrowOnError extends boolean = false>(options: Options<ArchiveReceiptData, ThrowOnError>): RequestResult<ArchiveReceiptResponses, ArchiveReceiptErrors, ThrowOnError> => (options.client ?? client).post<ArchiveReceiptResponses, ArchiveReceiptErrors, ThrowOnError>({ url: '/api/receipts/{id}/archive', ...options });
 
 export const unarchiveReceipt = <ThrowOnError extends boolean = false>(options: Options<UnarchiveReceiptData, ThrowOnError>): RequestResult<UnarchiveReceiptResponses, UnarchiveReceiptErrors, ThrowOnError> => (options.client ?? client).post<UnarchiveReceiptResponses, UnarchiveReceiptErrors, ThrowOnError>({ url: '/api/receipts/{id}/unarchive', ...options });
+
+export const restoreReceipt = <ThrowOnError extends boolean = false>(options: Options<RestoreReceiptData, ThrowOnError>): RequestResult<RestoreReceiptResponses, RestoreReceiptErrors, ThrowOnError> => (options.client ?? client).post<RestoreReceiptResponses, RestoreReceiptErrors, ThrowOnError>({ url: '/api/receipts/{id}/restore', ...options });
+
+export const deleteReceiptPermanently = <ThrowOnError extends boolean = false>(options: Options<DeleteReceiptPermanentlyData, ThrowOnError>): RequestResult<DeleteReceiptPermanentlyResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteReceiptPermanentlyResponses, unknown, ThrowOnError>({ url: '/api/receipts/{id}/permanent', ...options });

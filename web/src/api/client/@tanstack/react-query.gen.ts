@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addReceiptFiles, archiveReceipt, createReceipt, deleteReceipt, deleteReceiptFile, getMe, getReceipt, getReceiptFile, listReceipts, type Options, unarchiveReceipt, updateReceipt } from '../sdk.gen';
-import type { AddReceiptFilesData, AddReceiptFilesError, AddReceiptFilesResponse, ArchiveReceiptData, ArchiveReceiptResponse, CreateReceiptData, CreateReceiptError, CreateReceiptResponse, DeleteReceiptData, DeleteReceiptFileData, DeleteReceiptFileError, DeleteReceiptFileResponse, DeleteReceiptResponse, GetMeData, GetMeResponse, GetReceiptData, GetReceiptFileData, GetReceiptResponse, ListReceiptsData, ListReceiptsResponse, UnarchiveReceiptData, UnarchiveReceiptResponse, UpdateReceiptData, UpdateReceiptError, UpdateReceiptResponse } from '../types.gen';
+import { addReceiptFiles, archiveReceipt, createReceipt, deleteReceipt, deleteReceiptFile, deleteReceiptPermanently, getMe, getReceipt, getReceiptFile, listReceipts, listTrash, type Options, restoreReceipt, restoreReceiptFile, unarchiveReceipt, updateReceipt } from '../sdk.gen';
+import type { AddReceiptFilesData, AddReceiptFilesError, AddReceiptFilesResponse, ArchiveReceiptData, ArchiveReceiptResponse, CreateReceiptData, CreateReceiptError, CreateReceiptResponse, DeleteReceiptData, DeleteReceiptFileData, DeleteReceiptFileError, DeleteReceiptFileResponse, DeleteReceiptPermanentlyData, DeleteReceiptPermanentlyResponse, DeleteReceiptResponse, GetMeData, GetMeResponse, GetReceiptData, GetReceiptFileData, GetReceiptResponse, ListReceiptsData, ListReceiptsResponse, ListTrashData, ListTrashResponse, RestoreReceiptData, RestoreReceiptFileData, RestoreReceiptFileError, RestoreReceiptFileResponse, RestoreReceiptResponse, UnarchiveReceiptData, UnarchiveReceiptResponse, UpdateReceiptData, UpdateReceiptError, UpdateReceiptResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -115,6 +115,21 @@ export const createReceiptMutation = (options?: Partial<Options<CreateReceiptDat
     return mutationOptions;
 };
 
+export const listTrashQueryKey = (options?: Options<ListTrashData>) => createQueryKey('listTrash', options);
+
+export const listTrashOptions = (options?: Options<ListTrashData>) => queryOptions<ListTrashResponse, DefaultError, ListTrashResponse, ReturnType<typeof listTrashQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listTrash({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listTrashQueryKey(options)
+});
+
 export const deleteReceiptMutationKey = (options?: Partial<Options<DeleteReceiptData>>) => createMutationKey('deleteReceipt', options);
 
 export const deleteReceiptMutation = (options?: Partial<Options<DeleteReceiptData>>): UseMutationOptions<DeleteReceiptResponse, DefaultError, Options<DeleteReceiptData>> => {
@@ -213,6 +228,23 @@ export const getReceiptFileOptions = (options: Options<GetReceiptFileData>) => q
     queryKey: getReceiptFileQueryKey(options)
 });
 
+export const restoreReceiptFileMutationKey = (options?: Partial<Options<RestoreReceiptFileData>>) => createMutationKey('restoreReceiptFile', options);
+
+export const restoreReceiptFileMutation = (options?: Partial<Options<RestoreReceiptFileData>>): UseMutationOptions<RestoreReceiptFileResponse, RestoreReceiptFileError, Options<RestoreReceiptFileData>> => {
+    const mutationOptions: UseMutationOptions<RestoreReceiptFileResponse, RestoreReceiptFileError, Options<RestoreReceiptFileData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await restoreReceiptFile({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: restoreReceiptFileMutationKey(options)
+    };
+    return mutationOptions;
+};
+
 export const archiveReceiptMutationKey = (options?: Partial<Options<ArchiveReceiptData>>) => createMutationKey('archiveReceipt', options);
 
 export const archiveReceiptMutation = (options?: Partial<Options<ArchiveReceiptData>>): UseMutationOptions<ArchiveReceiptResponse, DefaultError, Options<ArchiveReceiptData>> => {
@@ -243,6 +275,40 @@ export const unarchiveReceiptMutation = (options?: Partial<Options<UnarchiveRece
             return data;
         },
         mutationKey: unarchiveReceiptMutationKey(options)
+    };
+    return mutationOptions;
+};
+
+export const restoreReceiptMutationKey = (options?: Partial<Options<RestoreReceiptData>>) => createMutationKey('restoreReceipt', options);
+
+export const restoreReceiptMutation = (options?: Partial<Options<RestoreReceiptData>>): UseMutationOptions<RestoreReceiptResponse, DefaultError, Options<RestoreReceiptData>> => {
+    const mutationOptions: UseMutationOptions<RestoreReceiptResponse, DefaultError, Options<RestoreReceiptData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await restoreReceipt({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: restoreReceiptMutationKey(options)
+    };
+    return mutationOptions;
+};
+
+export const deleteReceiptPermanentlyMutationKey = (options?: Partial<Options<DeleteReceiptPermanentlyData>>) => createMutationKey('deleteReceiptPermanently', options);
+
+export const deleteReceiptPermanentlyMutation = (options?: Partial<Options<DeleteReceiptPermanentlyData>>): UseMutationOptions<DeleteReceiptPermanentlyResponse, DefaultError, Options<DeleteReceiptPermanentlyData>> => {
+    const mutationOptions: UseMutationOptions<DeleteReceiptPermanentlyResponse, DefaultError, Options<DeleteReceiptPermanentlyData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteReceiptPermanently({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: deleteReceiptPermanentlyMutationKey(options)
     };
     return mutationOptions;
 };
