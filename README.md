@@ -26,7 +26,7 @@ dotnet tool restore
 dotnet run --project src/Kuitit.AppHost
 ```
 
-Open the `web` URL from the Aspire dashboard. The mock IdP login accepts any username (it becomes `sub`);
+Open http://localhost:5173 (the `web` resource). The mock IdP login accepts any username (it becomes `sub`);
 enter `{"email": "you@example.com"}` in its claims box to set an email. Use two usernames to check that users
 can't see each other's receipts. Data goes to `./.data` (gitignored).
 

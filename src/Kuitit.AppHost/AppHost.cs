@@ -22,6 +22,8 @@ var api = builder
 builder
     .AddViteApp("web", "../../web")
     .WithBun()
+    // Fixed so the dev URL (and the session cookie's login) survives restarts.
+    .WithEndpoint("http", e => e.Port = 5173)
     .WithEnvironment("API_URL", api.GetEndpoint("http"))
     .WithReference(api)
     .WaitFor(api);
