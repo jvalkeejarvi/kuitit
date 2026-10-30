@@ -44,6 +44,9 @@ bun run client                    # regenerate the API client after an API chang
 
 API changes: `dotnet build` rewrites `web/openapi.json`; then `bun run client`. CI fails if either is stale.
 
+TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) stays only because
+`@hey-api/openapi-ts` needs the compiler JS API that TS 7 does not ship yet; drop it once hey-api supports TS 7.
+
 ## Configuration
 
 | Setting | Meaning |
