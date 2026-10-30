@@ -21,6 +21,9 @@ void i18n
     detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'], lookupLocalStorage: 'kuitit.lang' },
   });
 
-i18n.on('languageChanged', lng => document.documentElement.setAttribute('lang', lng));
+i18n.on('languageChanged', lng => {
+  document.documentElement.setAttribute('lang', lng);
+  document.title = i18n.t('app.title');
+});
 
 export default i18n;
