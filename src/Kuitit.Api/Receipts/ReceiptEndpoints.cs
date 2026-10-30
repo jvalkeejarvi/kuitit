@@ -113,13 +113,18 @@ internal static class ReceiptEndpoints
         return TypedResults.Created($"/api/receipts/{receipt.Id}", ReceiptDto.From(receipt));
     }
 
+    /// <summary>Also a trashed receipt (DeletedAt set), so it can be looked at before restoring or purging.</summary>
     private static async Task<Results<Ok<ReceiptDto>, NotFound>> GetAsync(
         Guid id,
         AppDbContext db,
         CancellationToken ct
     )
     {
-        var receipt = await db.Receipts.Include(r => r.Files).AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+        var receipt = await db
+            .Receipts.IgnoreQueryFilters([AppDbContext.NotDeleted])
+            .Include(r => r.Files)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == id, ct);
         return receipt is null ? TypedResults.NotFound() : TypedResults.Ok(ReceiptDto.From(receipt));
     }
 
@@ -195,9 +200,11 @@ internal static class ReceiptEndpoints
         CancellationToken ct
     )
     {
+        // Files of a trashed receipt can be viewed too; a removed file can't.
         var file = await db
-            .ReceiptFiles.AsNoTracking()
-            .FirstOrDefaultAsync(f => f.Id == fileId && f.ReceiptId == id, ct);
+            .ReceiptFiles.IgnoreQueryFilters([AppDbContext.NotDeleted])
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Id == fileId && f.ReceiptId == id && f.DeletedAt == null, ct);
         if (file is null)
         {
             return TypedResults.NotFound();

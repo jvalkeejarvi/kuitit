@@ -45,8 +45,22 @@ public sealed class TrashTests : IAsyncLifetime
         (await _alice.DeleteAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         (await ListAsync(_alice)).Should().BeEmpty();
-        (await _alice.GetAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // Still viewable (with its files) from the trash, but not editable until restored.
+        var viewed = (await _alice.GetFromJsonAsync<ReceiptDto>($"/api/receipts/{receipt.Id}", Ct))!;
+        viewed.DeletedAt.Should().Be(_factory.Time.GetUtcNow());
         (await _alice.GetAsync($"/api/receipts/{receipt.Id}/files/{receipt.Files[0].Id}", Ct))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.OK);
+        (
+            await _alice.PutAsJsonAsync(
+                $"/api/receipts/{receipt.Id}",
+                new UpdateReceiptRequest("x", null, null, receipt.PurchasedOn, 24),
+                Ct
+            )
+        )
+            .StatusCode.Should()
+            .Be(HttpStatusCode.NotFound);
+        (await _alice.PostAsync($"/api/receipts/{receipt.Id}/archive", null, Ct))
             .StatusCode.Should()
             .Be(HttpStatusCode.NotFound);
         var trashed = (await ListAsync(_alice, "/api/receipts/trash")).Should().ContainSingle().Subject;
@@ -109,6 +123,7 @@ public sealed class TrashTests : IAsyncLifetime
         await _alice.DeleteAsync($"/api/receipts/{receipt.Id}", Ct);
 
         (await ListAsync(_bob, "/api/receipts/trash")).Should().BeEmpty();
+        (await _bob.GetAsync($"/api/receipts/{receipt.Id}", Ct)).StatusCode.Should().Be(HttpStatusCode.NotFound);
         (await _bob.PostAsync($"/api/receipts/{receipt.Id}/restore", null, Ct))
             .StatusCode.Should()
             .Be(HttpStatusCode.NotFound);
