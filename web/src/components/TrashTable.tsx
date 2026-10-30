@@ -16,13 +16,13 @@ import { formatTimestamp } from '@/lib/dates';
 import { useTrashMutations } from '@/lib/receiptMutations';
 import { TRASH_DAYS } from '@/lib/receiptRules';
 import { useDialog } from '@/lib/useDialog';
+import { SM_UP, useMediaQuery } from '@/lib/useMediaQuery';
 
 const column = createColumnHelper<ReceiptDto>();
 
-// The icon column is hidden on phones, where it would force sideways scrolling; restore and permanent delete are in the detail page banner.
 const columnClass: Partial<Record<string, string>> = {
   name: 'whitespace-normal break-words hyphens-auto',
-  actions: 'hidden w-0 sm:table-cell',
+  actions: 'w-0',
 };
 
 const iconButtonClass =
@@ -70,10 +70,14 @@ export function TrashTable({ receipts }: { receipts: ReceiptDto[] }) {
     [t, i18n.language],
   );
 
+  // The icon column is left out on phones, where it would force sideways scrolling; the detail page has the
+  // same actions. Removed via visibility rather than CSS so the table's frame knows the edge cells.
+  const smUp = useMediaQuery(SM_UP);
+  const columnVisibility = useMemo(() => ({ actions: smUp }), [smUp]);
   const table = useReactTable({
     data: receipts,
     columns,
-    state: { sorting },
+    state: { sorting, columnVisibility },
     onSortingChange: setSorting,
     enableMultiSort: false,
     enableSortingRemoval: false,

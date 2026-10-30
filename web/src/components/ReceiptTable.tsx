@@ -17,16 +17,16 @@ import { formatDate } from '@/lib/dates';
 import type { ReceiptSort, SortColumn } from '@/lib/receiptSort';
 import { useArchiveMutations } from '@/lib/receiptMutations';
 import { useDialog } from '@/lib/useDialog';
+import { SM_UP, useMediaQuery } from '@/lib/useMediaQuery';
 
 const column = createColumnHelper<ReceiptDto>();
 
-// The icon column is hidden on phones, where it would force sideways scrolling; archive and delete are on the detail page.
 const columnClass: Partial<Record<string, string>> = {
   // Long names wrap (between words) rather than widen the table past a phone screen.
   name: 'whitespace-normal break-words hyphens-auto',
   // Date above badge; the header may take two lines ("Takuu / päättyy") so the column stays narrow.
   expiresOn: 'whitespace-normal',
-  actions: 'hidden w-0 sm:table-cell',
+  actions: 'w-0',
 };
 
 export function ReceiptTable({
@@ -88,10 +88,14 @@ export function ReceiptTable({
 
   // Stable identity: a new array each render makes the table re-sort, reset its page index and render again, forever.
   const sorting = useMemo<SortingState>(() => [{ id: sort.column, desc: sort.desc }], [sort.column, sort.desc]);
+  // The icon column is left out on phones, where it would force sideways scrolling; the detail page has the
+  // same actions. Removed via visibility rather than CSS so the table's frame knows the edge cells.
+  const smUp = useMediaQuery(SM_UP);
+  const columnVisibility = useMemo(() => ({ actions: smUp }), [smUp]);
   const table = useReactTable({
     data: receipts,
     columns,
-    state: { sorting },
+    state: { sorting, columnVisibility },
     onSortingChange: updater => {
       const [next] = typeof updater === 'function' ? updater(sorting) : updater;
       // Clicking a sorted column a third time would clear sorting; flip direction instead.

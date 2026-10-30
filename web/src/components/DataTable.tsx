@@ -2,10 +2,15 @@ import { flexRender, type Table } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 
 /**
- * The app's table look: bordered box, sortable headers (click to sort, again to reverse), divided rows.
- * Cells don't wrap, so on narrow screens the table scrolls inside its box rather than the page.
- * From sm up the box doesn't scroll (a scroll box would break sticky), and the header row sticks under the top
- * bar and toolbar (--header-h + --toolbar-h, set by useCssHeightVar).
+ * The app's table look: rounded frame, sortable headers (click to sort, again to reverse), divided rows.
+ *
+ * The frame is drawn by the cells (border-separate), not by a wrapping box: the header row then carries the top
+ * border and rounded top corners with it when it sticks (from sm up, under the top bar and toolbar:
+ * --header-h + --toolbar-h, set by useCssHeightVar). Columns hidden per screen size must therefore be removed
+ * through the table's column visibility, not CSS, so first/last really are the edge cells.
+ *
+ * Cells don't wrap, so on phones the table scrolls sideways inside its wrapper; from sm up the wrapper doesn't
+ * scroll (a scroll box would break sticky).
  */
 export function DataTable<Row>({
   table,
@@ -16,10 +21,10 @@ export function DataTable<Row>({
   columnClass?: Partial<Record<string, string>>;
 }) {
   return (
-    // `relative` keeps absolutely positioned content (sr-only headers) inside the box, not widening the page.
-    <div className="relative overflow-x-auto rounded-lg border border-slate-200 bg-white sm:overflow-x-visible dark:border-slate-800 dark:bg-slate-900">
-      <table className="w-full text-left text-sm whitespace-nowrap">
-        <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
+    // `relative` keeps absolutely positioned content (sr-only headers) inside the wrapper, not widening the page.
+    <div className="relative overflow-x-auto sm:overflow-x-visible">
+      <table className="w-full border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
+        <thead className="text-slate-500 dark:text-slate-400">
           {table.getHeaderGroups().map(group => (
             <tr key={group.id}>
               {group.headers.map(header => {
@@ -29,7 +34,7 @@ export function DataTable<Row>({
                   <th
                     key={header.id}
                     aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                    className={`bg-white px-2 py-2 font-medium sm:sticky sm:top-[calc(var(--header-h,0px)+var(--toolbar-h,0px))] sm:z-10 sm:px-4 sm:shadow-[inset_0_-1px_0] sm:shadow-slate-200 dark:bg-slate-900 dark:sm:shadow-slate-800 ${columnClass[header.id] ?? ''}`}
+                    className={`border-y border-slate-200 bg-white px-2 py-2 font-medium first:rounded-tl-lg first:border-l last:rounded-tr-lg last:border-r sm:sticky sm:top-[calc(var(--header-h,0px)+var(--toolbar-h,0px))] sm:z-10 sm:px-4 dark:border-slate-800 dark:bg-slate-900 ${columnClass[header.id] ?? ''}`}
                   >
                     {header.column.getCanSort() ? (
                       <button
@@ -49,11 +54,14 @@ export function DataTable<Row>({
             </tr>
           ))}
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+        <tbody>
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
+            <tr key={row.id} className="group">
               {row.getVisibleCells().map(cell => (
-                <td key={cell.id} className={`px-2 py-3 sm:px-4 ${columnClass[cell.column.id] ?? ''}`}>
+                <td
+                  key={cell.id}
+                  className={`border-b border-slate-200 border-b-slate-100 bg-white px-2 py-3 group-last:border-b-slate-200 first:border-l group-last:first:rounded-bl-lg last:border-r group-last:last:rounded-br-lg sm:px-4 dark:border-slate-800 dark:border-b-slate-800 dark:bg-slate-900 dark:group-last:border-b-slate-800 ${columnClass[cell.column.id] ?? ''}`}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
