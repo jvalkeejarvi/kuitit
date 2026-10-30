@@ -1,5 +1,7 @@
 # Synology Container Manager "Project". Copy next to a .env file (see .env.example) and run:
 #   docker compose pull && docker compose up -d
+# With the optional telemetry dashboard:
+#   docker compose --profile dashboard up -d
 # Rotate container logs so they don't fill the volume. `docker logs` still reads them.
 x-logging: &logging
   driver: json-file
@@ -33,3 +35,25 @@ services:
       Auth__AllowedUsers__2: ${ALLOWED_USER_3:-}
       # Optional cap; the GC trims to this under pressure.
       DOTNET_GCHeapHardLimit: ${DOTNET_GCHeapHardLimit:-0x8000000}
+      OTEL_SERVICE_NAME: kuitit
+      # http://aspire-dashboard:18889 when the dashboard profile is on; empty disables export.
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+
+  # Optional. Logs, traces and metrics kept in memory only (lost on restart), roughly 65-80 MB RAM.
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:${ASPIRE_DASHBOARD_VERSION:-13.6}
+    profiles: [dashboard]
+    restart: unless-stopped
+    logging: *logging
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    # UI behind the DSM reverse proxy. OTLP (18889) stays on the internal compose network.
+    ports:
+      - "127.0.0.1:18888:18888"
+    environment:
+      # Login with this token (or the one printed in the container log when empty).
+      Dashboard__Frontend__BrowserToken: ${DASHBOARD_TOKEN:-}
+      Dashboard__Otlp__AuthMode: Unsecured

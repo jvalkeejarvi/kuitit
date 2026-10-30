@@ -76,6 +76,10 @@ TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) s
 
 Logs: `docker compose logs -f kuitit` over SSH. Rotated at 3 x 10 MB (`x-logging` in `compose.yaml`).
 
+Telemetry dashboard (optional): set `OTEL_EXPORTER_OTLP_ENDPOINT` and `DASHBOARD_TOKEN` in `.env`, run
+`docker compose --profile dashboard up -d`, and add a reverse proxy rule for `localhost:18888` (enable WebSocket
+headers). Data is in memory only.
+
 "OIDC callback failed" behind the proxy is almost always the external URL or `X-Forwarded-Proto` not matching
 the redirect URI registered in SSO Server.
 
