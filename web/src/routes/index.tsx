@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { listReceiptsOptions } from '@/api/client/@tanstack/react-query.gen';
+import type { ReceiptDto } from '@/api/client/types.gen';
 import { AddReceiptForm } from '@/components/AddReceiptForm';
 import { ReceiptTable } from '@/components/ReceiptTable';
 import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
@@ -22,6 +23,9 @@ export const Route = createFileRoute('/')({
   component: ReceiptsPage,
 });
 
+// Shared fallback: a fresh [] each render would change the table's data identity every time.
+const noReceipts: ReceiptDto[] = [];
+
 const tabClass = 'rounded-md px-3 py-1.5 text-sm font-medium';
 const activeTab = 'bg-white shadow-sm dark:bg-slate-800';
 const inactiveTab = 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100';
@@ -32,7 +36,7 @@ function ReceiptsPage() {
   const navigate = Route.useNavigate();
   const archived = search.archived ?? false;
   const sort: ReceiptSort = { column: search.sort ?? 'expiresOn', desc: search.desc ?? false };
-  const { data: receipts = [] } = useQuery(listReceiptsOptions({ query: { archived } }));
+  const { data: receipts = noReceipts } = useQuery(listReceiptsOptions({ query: { archived } }));
   const [adding, setAdding] = useState(false);
 
   return (
