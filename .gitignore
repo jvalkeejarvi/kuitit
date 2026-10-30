@@ -1,0 +1,37 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+artifacts/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+
+# Local app data (SQLite, uploaded files, DataProtection keys)
+.data/
+*.db
+*.db-shm
+*.db-wal
+
+# Frontend
+node_modules/
+web/dist/
+web/coverage/
+web/src/routeTree.gen.ts
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Aspire
+.aspire/
