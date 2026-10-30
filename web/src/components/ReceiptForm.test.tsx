@@ -4,26 +4,28 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { client } from '@/api/client/client.gen';
 import i18n from '@/i18n';
-import { createReceipt } from '@/api/client/sdk.gen';
-import { AddReceiptForm } from './AddReceiptForm';
+import { createReceipt, updateReceipt } from '@/api/client/sdk.gen';
+import type { ReceiptDto } from '@/api/client/types.gen';
+import { ReceiptForm } from './ReceiptForm';
 
 // jsdom's File can't pass through Node's Request/FormData, so assert on the generated SDK call instead.
 vi.mock('@/api/client/sdk.gen', async importOriginal => ({
   ...(await importOriginal<typeof import('@/api/client/sdk.gen')>()),
   createReceipt: vi.fn(),
+  updateReceipt: vi.fn(),
 }));
 
-function renderForm(onDone = vi.fn()) {
+function renderForm(onDone = vi.fn(), receipt?: ReceiptDto) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <AddReceiptForm onDone={onDone} />
+      <ReceiptForm receipt={receipt} onDone={onDone} />
     </QueryClientProvider>,
   );
   return onDone;
 }
 
-describe('AddReceiptForm', () => {
+describe('ReceiptForm', () => {
   const fetchMock = vi.fn<typeof fetch>();
 
   beforeEach(async () => {
@@ -143,5 +145,38 @@ describe('AddReceiptForm', () => {
     expect(await screen.findByText('Only PDF, JPEG, PNG and HEIC files are allowed.')).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(createReceipt).not.toHaveBeenCalled();
+  });
+
+  it('edits an existing receipt: prefilled, no file picker, sends only details', async () => {
+    const receipt: ReceiptDto = {
+      id: 'r1',
+      name: 'TV',
+      store: 'Power',
+      description: null,
+      purchasedOn: '2025-12-30',
+      warrantyMonths: 60,
+      expiresOn: '2030-12-30',
+      files: [{ id: 'f1', fileName: 'r.pdf', contentType: 'application/pdf', sizeBytes: 1 }],
+      createdAt: '2026-01-01T00:00:00Z',
+      archivedAt: null,
+    };
+    vi.mocked(updateReceipt).mockResolvedValue({ data: receipt } as never);
+    const onDone = renderForm(vi.fn(), receipt);
+
+    expect(screen.getByRole('form', { name: 'Edit receipt' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveValue('TV');
+    expect(screen.getByLabelText('Warranty length')).toHaveValue(5);
+    expect(screen.getByLabelText('Unit')).toHaveValue('years');
+    expect(screen.queryByLabelText('Choose files')).not.toBeInTheDocument();
+
+    await userEvent.clear(screen.getByLabelText('Store'));
+    await userEvent.type(screen.getByLabelText('Description'), 'OLED');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(vi.mocked(updateReceipt).mock.calls[0]![0]).toMatchObject({
+      path: { id: 'r1' },
+      body: { name: 'TV', store: null, description: 'OLED', purchasedOn: '2025-12-30', warrantyMonths: 60 },
+    });
   });
 });

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { listReceiptsOptions } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
-import { AddReceiptForm } from '@/components/AddReceiptForm';
+import { ReceiptForm } from '@/components/ReceiptForm';
 import { ReceiptTable } from '@/components/ReceiptTable';
 import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
 
@@ -70,7 +70,7 @@ function ReceiptsPage() {
         )}
       </div>
 
-      {adding && <AddReceiptForm onDone={() => setAdding(false)} />}
+      {adding && <ReceiptForm onDone={() => setAdding(false)} />}
 
       {receipts.length === 0 ? (
         <p className="py-12 text-center text-slate-500 dark:text-slate-400">

@@ -3,10 +3,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { createReceiptMutation, listReceiptsQueryKey } from '@/api/client/@tanstack/react-query.gen';
+import type { ReceiptDto } from '@/api/client/types.gen';
 import { addMonths, formatDate, today } from '@/lib/dates';
 import { X } from 'lucide-react';
 import { FilePicker } from '@/components/FilePicker';
 import { fileProblemMessage, formatFileSize } from '@/lib/files';
+import { useUpdateMutation } from '@/lib/receiptMutations';
 import {
   fileProblems,
   MAX_DESCRIPTION_LENGTH,
@@ -24,13 +26,17 @@ type Unit = 'months' | 'years';
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950';
 
-export function AddReceiptForm({ onDone }: { onDone: () => void }) {
+/** Creates a receipt, or edits the details of `receipt` (its files are managed on the detail page). */
+export function ReceiptForm({ receipt, onDone }: { receipt?: ReceiptDto; onDone: () => void }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const create = useMutation({
     ...createReceiptMutation(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: listReceiptsQueryKey() }),
   });
+  const update = useUpdateMutation();
+  const editing = receipt !== undefined;
+  const title = editing ? t('form.editTitle') : t('form.title');
 
   const schema = z
     .object({
@@ -55,7 +61,7 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
       warrantyUnit: z.enum(['months', 'years']),
       files: z
         .array(z.instanceof(File))
-        .min(1, t('form.errors.fileRequired'))
+        .min(editing ? 0 : 1, t('form.errors.fileRequired'))
         .superRefine((files, ctx) => {
           for (const problem of fileProblems(files)) {
             ctx.addIssue({ code: 'custom', message: fileProblemMessage(problem, t) });
@@ -75,33 +81,42 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
 
   const form = useForm({
     defaultValues: {
-      name: '',
-      store: '',
-      description: '',
-      purchasedOn: today(),
-      warrantyAmount: 2,
-      warrantyUnit: 'years' as Unit,
+      name: receipt?.name ?? '',
+      store: receipt?.store ?? '',
+      description: receipt?.description ?? '',
+      purchasedOn: receipt?.purchasedOn ?? today(),
+      ...fromMonths(receipt?.warrantyMonths ?? 24),
       files: [] as File[],
     },
     validators: { onSubmit: schema },
     onSubmit: async ({ value }) => {
-      await create.mutateAsync({
-        body: {
-          name: value.name.trim(),
-          store: value.store.trim() || undefined,
-          description: value.description.trim() || undefined,
-          purchasedOn: value.purchasedOn,
-          warrantyMonths: toMonths(value.warrantyAmount, value.warrantyUnit),
-          files: value.files,
-        },
-      });
+      const details = {
+        name: value.name.trim(),
+        purchasedOn: value.purchasedOn,
+        warrantyMonths: toMonths(value.warrantyAmount, value.warrantyUnit),
+      };
+      if (editing) {
+        await update.mutateAsync({
+          path: { id: receipt.id },
+          body: { ...details, store: value.store.trim() || null, description: value.description.trim() || null },
+        });
+      } else {
+        await create.mutateAsync({
+          body: {
+            ...details,
+            store: value.store.trim() || undefined,
+            description: value.description.trim() || undefined,
+            files: value.files,
+          },
+        });
+      }
       onDone();
     },
   });
 
   return (
     <form
-      aria-label={t('form.title')}
+      aria-label={title}
       className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
       onSubmit={e => {
         e.preventDefault();
@@ -109,7 +124,7 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
       }}
       noValidate
     >
-      <h2 className="text-lg font-semibold">{t('form.title')}</h2>
+      <h2 className="text-lg font-semibold">{title}</h2>
 
       <form.Field name="name">
         {field => (
@@ -219,40 +234,44 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
         )}
       </form.Field>
 
-      <form.Field name="files">
-        {field => (
-          <Field label={t('form.file')} id="file-choose" errors={field.state.meta.errors}>
-            <FilePicker
-              chooseId="file-choose"
-              disabled={field.state.value.length >= MAX_FILES}
-              onFiles={files => field.handleChange([...field.state.value, ...files])}
-            />
-            {field.state.value.length > 0 && (
-              <ul className="mt-2 space-y-1 text-sm">
-                {field.state.value.map((file, i) => (
-                  <li key={`${file.name}-${i}`} className="flex items-center gap-2">
-                    <span className="min-w-0 truncate">{file.name}</span>
-                    <span className="shrink-0 text-slate-500">{formatFileSize(file.size, i18n.language)}</span>
-                    <button
-                      type="button"
-                      aria-label={t('files.removeSelected', { name: file.name })}
-                      onClick={() => field.handleChange(field.state.value.filter((_, j) => j !== i))}
-                      className="ml-auto rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                    >
-                      <X className="size-4" aria-hidden />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-1 text-xs text-slate-500">
-              {t('files.hint', { mb: MAX_FILE_MB, max: MAX_FILES, totalMb: MAX_UPLOAD_MB })}
-            </p>
-          </Field>
-        )}
-      </form.Field>
+      {!editing && (
+        <form.Field name="files">
+          {field => (
+            <Field label={t('form.file')} id="file-choose" errors={field.state.meta.errors}>
+              <FilePicker
+                chooseId="file-choose"
+                disabled={field.state.value.length >= MAX_FILES}
+                onFiles={files => field.handleChange([...field.state.value, ...files])}
+              />
+              {field.state.value.length > 0 && (
+                <ul className="mt-2 space-y-1 text-sm">
+                  {field.state.value.map((file, i) => (
+                    <li key={`${file.name}-${i}`} className="flex items-center gap-2">
+                      <span className="min-w-0 truncate">{file.name}</span>
+                      <span className="shrink-0 text-slate-500">{formatFileSize(file.size, i18n.language)}</span>
+                      <button
+                        type="button"
+                        aria-label={t('files.removeSelected', { name: file.name })}
+                        onClick={() => field.handleChange(field.state.value.filter((_, j) => j !== i))}
+                        className="ml-auto rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      >
+                        <X className="size-4" aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-1 text-xs text-slate-500">
+                {t('files.hint', { mb: MAX_FILE_MB, max: MAX_FILES, totalMb: MAX_UPLOAD_MB })}
+              </p>
+            </Field>
+          )}
+        </form.Field>
+      )}
 
-      {create.isError && <p className="text-sm text-red-600 dark:text-red-400">{t('form.errors.server')}</p>}
+      {(create.isError || update.isError) && (
+        <p className="text-sm text-red-600 dark:text-red-400">{t('form.errors.server')}</p>
+      )}
 
       <div className="flex justify-end gap-2">
         <button
@@ -280,6 +299,13 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
 
 function toMonths(amount: number, unit: Unit): number {
   return unit === 'years' ? amount * 12 : amount;
+}
+
+/** Whole years show as years, anything else as months. */
+function fromMonths(months: number): { warrantyAmount: number; warrantyUnit: Unit } {
+  return months % 12 === 0
+    ? { warrantyAmount: months / 12, warrantyUnit: 'years' }
+    : { warrantyAmount: months, warrantyUnit: 'months' };
 }
 
 function Field({

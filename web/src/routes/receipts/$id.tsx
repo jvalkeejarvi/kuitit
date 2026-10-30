@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, ArrowLeft, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getReceiptOptions } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
 import { ReceiptFiles } from '@/components/ReceiptFiles';
+import { ReceiptForm } from '@/components/ReceiptForm';
 import { StatusBadge } from '@/components/StatusBadge';
 import { confirmArchive, confirmDelete } from '@/lib/confirmations';
 import { formatDate } from '@/lib/dates';
@@ -39,6 +41,7 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
   const navigate = useNavigate();
   const { archive, unarchive } = useArchiveMutations();
   const [dialogNode, openDialog] = useDialog();
+  const [editing, setEditing] = useState(false);
   const archived = receipt.archivedAt != null;
   const backSearch = archived ? { archived: true } : {};
   const remove = useDeleteMutation(() => void navigate({ to: '/', search: backSearch }));
@@ -65,31 +68,43 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
         {archived ? t('receipts.archived') : t('receipts.active')}
       </Link>
 
-      <article className="space-y-6 rounded-lg border border-slate-200 bg-white p-4 sm:p-6 dark:border-slate-800 dark:bg-slate-900">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold break-words">{receipt.name}</h1>
-          {receipt.store && <p className="text-slate-600 dark:text-slate-400">{receipt.store}</p>}
-        </header>
+      {editing && <ReceiptForm receipt={receipt} onDone={() => setEditing(false)} />}
 
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
-          <Detail label={t('detail.purchasedOn')}>{formatDate(receipt.purchasedOn, lang)}</Detail>
-          <Detail label={t('detail.warranty')}>{warrantyLength(receipt.warrantyMonths, t)}</Detail>
-          <Detail label={t('detail.expiresOn')}>
-            <span className="inline-flex flex-wrap items-center gap-2">
-              {formatDate(receipt.expiresOn, lang)}
-              <StatusBadge expiresOn={receipt.expiresOn} />
-            </span>
-          </Detail>
-          {receipt.description && (
-            <Detail label={t('detail.description')}>
-              <span className="whitespace-pre-wrap">{receipt.description}</span>
-            </Detail>
-          )}
-          <Detail label={t('detail.added')}>{formatTimestamp(receipt.createdAt, lang)}</Detail>
-          {receipt.archivedAt && (
-            <Detail label={t('detail.archivedAt')}>{formatTimestamp(receipt.archivedAt, lang)}</Detail>
-          )}
-        </dl>
+      <article className="space-y-6 rounded-lg border border-slate-200 bg-white p-4 sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+        {!editing && (
+          <>
+            <header className="flex items-start gap-3">
+              <div className="min-w-0 flex-1 space-y-1">
+                <h1 className="text-2xl font-semibold break-words">{receipt.name}</h1>
+                {receipt.store && <p className="text-slate-600 dark:text-slate-400">{receipt.store}</p>}
+              </div>
+              <button type="button" className={buttonClass} onClick={() => setEditing(true)}>
+                <Pencil className="size-4" aria-hidden />
+                {t('detail.edit')}
+              </button>
+            </header>
+
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
+              <Detail label={t('detail.purchasedOn')}>{formatDate(receipt.purchasedOn, lang)}</Detail>
+              <Detail label={t('detail.warranty')}>{warrantyLength(receipt.warrantyMonths, t)}</Detail>
+              <Detail label={t('detail.expiresOn')}>
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  {formatDate(receipt.expiresOn, lang)}
+                  <StatusBadge expiresOn={receipt.expiresOn} />
+                </span>
+              </Detail>
+              {receipt.description && (
+                <Detail label={t('detail.description')}>
+                  <span className="whitespace-pre-wrap">{receipt.description}</span>
+                </Detail>
+              )}
+              <Detail label={t('detail.added')}>{formatTimestamp(receipt.createdAt, lang)}</Detail>
+              {receipt.archivedAt && (
+                <Detail label={t('detail.archivedAt')}>{formatTimestamp(receipt.archivedAt, lang)}</Detail>
+              )}
+            </dl>
+          </>
+        )}
 
         <ReceiptFiles receipt={receipt} />
 

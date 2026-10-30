@@ -7,6 +7,7 @@ import {
   getReceiptQueryKey,
   listReceiptsQueryKey,
   unarchiveReceiptMutation,
+  updateReceiptMutation,
 } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
 
@@ -45,4 +46,8 @@ export function useFileMutations() {
     add: useMutation({ ...addReceiptFilesMutation(), onSuccess }),
     remove: useMutation({ ...deleteReceiptFileMutation(), onSuccess }),
   };
+}
+
+export function useUpdateMutation() {
+  return useMutation({ ...updateReceiptMutation(), onSuccess: useReceiptUpdated() });
 }

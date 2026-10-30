@@ -56,7 +56,8 @@
     "years_one": "{{count}} vuosi",
     "years_other": "{{count}} vuotta",
     "months_one": "{{count}} kuukausi",
-    "months_other": "{{count}} kuukautta"
+    "months_other": "{{count}} kuukautta",
+    "edit": "Muokkaa"
   },
   "confirm": {
     "archiveTitle": "Arkistoidaanko kuitti?",
@@ -87,6 +88,7 @@
   },
   "form": {
     "title": "Uusi kuitti",
+    "editTitle": "Muokkaa kuittia",
     "name": "Nimi",
     "namePlaceholder": "esim. Pesukone",
     "store": "Kauppa",

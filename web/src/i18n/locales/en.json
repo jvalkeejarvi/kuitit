@@ -56,7 +56,8 @@
     "years_one": "{{count}} year",
     "years_other": "{{count}} years",
     "months_one": "{{count}} month",
-    "months_other": "{{count}} months"
+    "months_other": "{{count}} months",
+    "edit": "Edit"
   },
   "confirm": {
     "archiveTitle": "Archive receipt?",
@@ -87,6 +88,7 @@
   },
   "form": {
     "title": "New receipt",
+    "editTitle": "Edit receipt",
     "name": "Name",
     "namePlaceholder": "e.g. Washing machine",
     "store": "Store",
