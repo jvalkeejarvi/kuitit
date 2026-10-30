@@ -49,11 +49,8 @@
     "warranty": "Takuu",
     "expiresOn": "Takuu päättyy",
     "description": "Kuvaus",
-    "file": "Tiedosto",
     "added": "Lisätty",
     "archivedAt": "Arkistoitu",
-    "preview": "Kuitti: {{name}}",
-    "openFile": "Avaa kuitti",
     "notFound": "Kuittia ei löytynyt.",
     "backToList": "Takaisin kuitteihin",
     "years_one": "{{count}} vuosi",
@@ -66,6 +63,27 @@
     "archiveBody": "\"{{name}}\" siirtyy arkistoituihin. Voit palauttaa sen myöhemmin.",
     "deleteTitle": "Poistetaanko kuitti?",
     "deleteBody": "\"{{name}}\" ja sen tiedosto poistetaan pysyvästi. Tätä ei voi perua."
+  },
+  "files": {
+    "heading_one": "{{count}} tiedosto",
+    "heading_other": "{{count}} tiedostoa",
+    "takePhoto": "Ota kuva",
+    "chooseFiles": "Valitse tiedostoja",
+    "hint": "PDF, JPEG, PNG tai HEIC; enintään {{max}} tiedostoa, kukin enintään {{mb}} Mt, yhteensä {{totalMb}} Mt kerralla",
+    "removeSelected": "Poista {{name}}",
+    "open": "Avaa {{name}}",
+    "delete": "Poista {{name}}",
+    "lastFile": "Kuitilla on oltava vähintään yksi tiedosto",
+    "uploading": "Lähetetään...",
+    "deleteTitle": "Poistetaanko tiedosto?",
+    "deleteBody": "\"{{name}}\" poistetaan pysyvästi.",
+    "errors": {
+      "tooMany": "Kuitilla voi olla enintään {{max}} tiedostoa.",
+      "tooLarge": "Tiedosto voi olla enintään {{mb}} Mt.",
+      "type": "Vain PDF-, JPEG-, PNG- ja HEIC-tiedostot kelpaavat.",
+      "totalTooLarge": "Kerralla voi lähettää enintään {{mb}} Mt; lisää tiedostot pienemmissä erissä.",
+      "server": "Tiedostojen tallennus epäonnistui. Yritä uudelleen."
+    }
   },
   "form": {
     "title": "Uusi kuitti",
@@ -81,10 +99,7 @@
     "expiresPreview": "Takuu päättyy {{date}}",
     "description": "Kuvaus",
     "descriptionPlaceholder": "Malli, sarjanumero, muistiinpanot...",
-    "file": "Kuitti",
-    "takePhoto": "Ota kuva",
-    "chooseFile": "Valitse tiedosto",
-    "fileHint": "PDF, JPEG, PNG tai HEIC, enintään {{mb}} Mt",
+    "file": "Tiedostot",
     "save": "Tallenna",
     "saving": "Tallennetaan...",
     "cancel": "Peruuta",
@@ -96,9 +111,7 @@
       "purchasedOnRequired": "Ostopäivä on pakollinen.",
       "purchasedOnFuture": "Ostopäivä ei voi olla tulevaisuudessa.",
       "warrantyRange": "Takuun on oltava {{min}}-{{max}} kuukautta.",
-      "fileRequired": "Lisää kuva tai tiedosto kuitista.",
-      "fileTooLarge": "Tiedosto on yli {{mb}} Mt.",
-      "fileType": "Vain PDF-, JPEG-, PNG- ja HEIC-tiedostot kelpaavat.",
+      "fileRequired": "Lisää vähintään yksi kuva tai tiedosto kuitista.",
       "server": "Tallennus epäonnistui. Tarkista kentät ja yritä uudelleen."
     }
   },

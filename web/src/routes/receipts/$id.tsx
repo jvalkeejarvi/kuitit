@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, ArrowLeft, ExternalLink, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getReceiptOptions } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
-import { receiptFileUrl } from '@/api/setup';
+import { ReceiptFiles } from '@/components/ReceiptFiles';
 import { StatusBadge } from '@/components/StatusBadge';
 import { confirmArchive, confirmDelete } from '@/lib/confirmations';
 import { formatDate } from '@/lib/dates';
@@ -23,9 +23,6 @@ export const Route = createFileRoute('/receipts/$id')({
   component: ReceiptPage,
   notFoundComponent: ReceiptNotFound,
 });
-
-// Formats browsers can show in an <img>; PDF and HEIC open in a new tab instead.
-const previewTypes = new Set(['image/jpeg', 'image/png']);
 
 const buttonClass =
   'inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800';
@@ -47,7 +44,6 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
   const remove = useDeleteMutation(() => void navigate({ to: '/', search: backSearch }));
   const path = { id: receipt.id };
   const busy = archive.isPending || unarchive.isPending || remove.isPending;
-  const fileUrl = receiptFileUrl(receipt.id);
   const lang = i18n.language;
 
   const onArchive = async () => {
@@ -89,30 +85,15 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
               <span className="whitespace-pre-wrap">{receipt.description}</span>
             </Detail>
           )}
-          <Detail label={t('detail.file')}>
-            {receipt.fileName} ({fileSize(receipt.sizeBytes, lang)})
-          </Detail>
           <Detail label={t('detail.added')}>{formatTimestamp(receipt.createdAt, lang)}</Detail>
           {receipt.archivedAt && (
             <Detail label={t('detail.archivedAt')}>{formatTimestamp(receipt.archivedAt, lang)}</Detail>
           )}
         </dl>
 
-        {previewTypes.has(receipt.contentType) && (
-          <a href={fileUrl} target="_blank" rel="noreferrer" className="block">
-            <img
-              src={fileUrl}
-              alt={t('detail.preview', { name: receipt.name })}
-              className="max-h-96 rounded-md border border-slate-200 object-contain dark:border-slate-800"
-            />
-          </a>
-        )}
+        <ReceiptFiles receipt={receipt} />
 
         <div className="flex flex-wrap gap-2">
-          <a href={fileUrl} target="_blank" rel="noreferrer" className={buttonClass}>
-            <ExternalLink className="size-4" aria-hidden />
-            {t('detail.openFile')}
-          </a>
           {archived ? (
             <button type="button" disabled={busy} className={buttonClass} onClick={() => unarchive.mutate({ path })}>
               <ArchiveRestore className="size-4" aria-hidden />
@@ -162,15 +143,6 @@ function ReceiptNotFound() {
 
 function warrantyLength(months: number, t: ReturnType<typeof useTranslation>['t']): string {
   return months % 12 === 0 ? t('detail.years', { count: months / 12 }) : t('detail.months', { count: months });
-}
-
-function fileSize(bytes: number, locale: string): string {
-  const mb = bytes >= 1024 * 1024;
-  return new Intl.NumberFormat(locale, {
-    style: 'unit',
-    unit: mb ? 'megabyte' : 'kilobyte',
-    maximumFractionDigits: 1,
-  }).format(mb ? bytes / (1024 * 1024) : Math.max(bytes / 1024, 0.1));
 }
 
 function formatTimestamp(iso: string, locale: string): string {

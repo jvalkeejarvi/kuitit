@@ -4,13 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { createReceiptMutation, listReceiptsQueryKey } from '@/api/client/@tanstack/react-query.gen';
 import { addMonths, formatDate, today } from '@/lib/dates';
+import { X } from 'lucide-react';
+import { FilePicker } from '@/components/FilePicker';
+import { fileProblemMessage, formatFileSize } from '@/lib/files';
 import {
-  isAcceptedFile,
+  fileProblems,
   MAX_DESCRIPTION_LENGTH,
-  MAX_FILE_BYTES,
   MAX_FILE_MB,
+  MAX_FILES,
   MAX_NAME_LENGTH,
   MAX_STORE_LENGTH,
+  MAX_UPLOAD_MB,
   MAX_WARRANTY_MONTHS,
   MIN_WARRANTY_MONTHS,
 } from '@/lib/receiptRules';
@@ -49,12 +53,14 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
         .refine(d => d <= today(), t('form.errors.purchasedOnFuture')),
       warrantyAmount: z.number(),
       warrantyUnit: z.enum(['months', 'years']),
-      file: z
-        .instanceof(File, { message: t('form.errors.fileRequired') })
-        .nullable()
-        .refine(f => f !== null, t('form.errors.fileRequired'))
-        .refine(f => !f || f.size <= MAX_FILE_BYTES, t('form.errors.fileTooLarge', { mb: MAX_FILE_MB }))
-        .refine(f => !f || isAcceptedFile(f), t('form.errors.fileType')),
+      files: z
+        .array(z.instanceof(File))
+        .min(1, t('form.errors.fileRequired'))
+        .superRefine((files, ctx) => {
+          for (const problem of fileProblems(files)) {
+            ctx.addIssue({ code: 'custom', message: fileProblemMessage(problem, t) });
+          }
+        }),
     })
     .refine(
       v => {
@@ -75,7 +81,7 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
       purchasedOn: today(),
       warrantyAmount: 2,
       warrantyUnit: 'years' as Unit,
-      file: null as File | null,
+      files: [] as File[],
     },
     validators: { onSubmit: schema },
     onSubmit: async ({ value }) => {
@@ -86,7 +92,7 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
           description: value.description.trim() || undefined,
           purchasedOn: value.purchasedOn,
           warrantyMonths: toMonths(value.warrantyAmount, value.warrantyUnit),
-          file: value.file!,
+          files: value.files,
         },
       });
       onDone();
@@ -213,26 +219,35 @@ export function AddReceiptForm({ onDone }: { onDone: () => void }) {
         )}
       </form.Field>
 
-      <form.Field name="file">
+      <form.Field name="files">
         {field => (
           <Field label={t('form.file')} id="file-choose" errors={field.state.meta.errors}>
-            <div className="flex flex-wrap items-center gap-2">
-              {/* `capture` opens the camera directly on phones, which can't then pick a PDF, hence two inputs. */}
-              <FileButton
-                label={t('form.takePhoto')}
-                accept="image/*"
-                capture="environment"
-                onFile={f => field.handleChange(f)}
-              />
-              <FileButton
-                id="file-choose"
-                label={t('form.chooseFile')}
-                accept="image/*,application/pdf,.heic,.heif"
-                onFile={f => field.handleChange(f)}
-              />
-              {field.state.value && <span className="truncate text-sm">{field.state.value.name}</span>}
-            </div>
-            <p className="mt-1 text-xs text-slate-500">{t('form.fileHint', { mb: MAX_FILE_MB })}</p>
+            <FilePicker
+              chooseId="file-choose"
+              disabled={field.state.value.length >= MAX_FILES}
+              onFiles={files => field.handleChange([...field.state.value, ...files])}
+            />
+            {field.state.value.length > 0 && (
+              <ul className="mt-2 space-y-1 text-sm">
+                {field.state.value.map((file, i) => (
+                  <li key={`${file.name}-${i}`} className="flex items-center gap-2">
+                    <span className="min-w-0 truncate">{file.name}</span>
+                    <span className="shrink-0 text-slate-500">{formatFileSize(file.size, i18n.language)}</span>
+                    <button
+                      type="button"
+                      aria-label={t('files.removeSelected', { name: file.name })}
+                      onClick={() => field.handleChange(field.state.value.filter((_, j) => j !== i))}
+                      className="ml-auto rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    >
+                      <X className="size-4" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-1 text-xs text-slate-500">
+              {t('files.hint', { mb: MAX_FILE_MB, max: MAX_FILES, totalMb: MAX_UPLOAD_MB })}
+            </p>
           </Field>
         )}
       </form.Field>
@@ -291,33 +306,5 @@ function Field({
         </p>
       )}
     </div>
-  );
-}
-
-function FileButton({
-  id,
-  label,
-  accept,
-  capture,
-  onFile,
-}: {
-  id?: string;
-  label: string;
-  accept: string;
-  capture?: 'environment';
-  onFile: (file: File | null) => void;
-}) {
-  return (
-    <label className="cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800">
-      {label}
-      <input
-        id={id}
-        type="file"
-        className="sr-only"
-        accept={accept}
-        capture={capture}
-        onChange={e => onFile(e.target.files?.[0] ?? null)}
-      />
-    </label>
   );
 }

@@ -49,11 +49,8 @@
     "warranty": "Warranty",
     "expiresOn": "Warranty until",
     "description": "Description",
-    "file": "File",
     "added": "Added",
     "archivedAt": "Archived",
-    "preview": "Receipt for {{name}}",
-    "openFile": "Open receipt",
     "notFound": "Receipt not found.",
     "backToList": "Back to receipts",
     "years_one": "{{count}} year",
@@ -66,6 +63,27 @@
     "archiveBody": "\"{{name}}\" moves to Archived. You can restore it later.",
     "deleteTitle": "Delete receipt?",
     "deleteBody": "\"{{name}}\" and its file are deleted permanently. This can't be undone."
+  },
+  "files": {
+    "heading_one": "{{count}} file",
+    "heading_other": "{{count}} files",
+    "takePhoto": "Take photo",
+    "chooseFiles": "Choose files",
+    "hint": "PDF, JPEG, PNG or HEIC; up to {{max}} files, {{mb}} MB each, {{totalMb}} MB per upload",
+    "removeSelected": "Remove {{name}}",
+    "open": "Open {{name}}",
+    "delete": "Delete {{name}}",
+    "lastFile": "A receipt needs at least one file",
+    "uploading": "Uploading...",
+    "deleteTitle": "Delete file?",
+    "deleteBody": "\"{{name}}\" is deleted permanently.",
+    "errors": {
+      "tooMany": "A receipt can have at most {{max}} files.",
+      "tooLarge": "Each file can be at most {{mb}} MB.",
+      "type": "Only PDF, JPEG, PNG and HEIC files are allowed.",
+      "totalTooLarge": "One upload can be at most {{mb}} MB; add the files in smaller batches.",
+      "server": "Saving the files failed. Try again."
+    }
   },
   "form": {
     "title": "New receipt",
@@ -81,10 +99,7 @@
     "expiresPreview": "Warranty until {{date}}",
     "description": "Description",
     "descriptionPlaceholder": "Model, serial number, notes...",
-    "file": "Receipt",
-    "takePhoto": "Take photo",
-    "chooseFile": "Choose file",
-    "fileHint": "PDF, JPEG, PNG or HEIC, max {{mb}} MB",
+    "file": "Files",
     "save": "Save",
     "saving": "Saving...",
     "cancel": "Cancel",
@@ -96,9 +111,7 @@
       "purchasedOnRequired": "Purchase date is required.",
       "purchasedOnFuture": "Purchase date can't be in the future.",
       "warrantyRange": "Warranty must be between {{min}} and {{max}} months.",
-      "fileRequired": "Add a photo or file of the receipt.",
-      "fileTooLarge": "File is larger than {{mb}} MB.",
-      "fileType": "Only PDF, JPEG, PNG and HEIC files are allowed.",
+      "fileRequired": "Add at least one photo or file of the receipt.",
       "server": "Saving failed. Check the fields and try again."
     }
   },

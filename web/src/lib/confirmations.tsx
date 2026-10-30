@@ -24,3 +24,15 @@ export function confirmDelete(openDialog: OpenDialog, name: string, t: TFunction
     />
   ));
 }
+
+export function confirmDeleteFile(openDialog: OpenDialog, fileName: string, t: TFunction): Promise<boolean> {
+  return openDialog<boolean>(close => (
+    <ConfirmDialog
+      variant="delete"
+      title={t('files.deleteTitle')}
+      description={t('files.deleteBody', { name: fileName })}
+      confirmLabel={t('receipts.delete')}
+      onClose={close}
+    />
+  ));
+}

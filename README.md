@@ -104,7 +104,7 @@ Replace `kuitit.example.com` and `sso.example.com` with your host names. Takes a
    - Source: HTTPS, `kuitit.example.com`, port 443. Destination: HTTP, `localhost`, port 8080.
    - Custom Header: Create > WebSocket, then add `X-Forwarded-Proto` = `$scheme`.
    - Back in Certificate > Settings, assign the certificate to this proxy entry.
-   - Uploads are up to 20 MB; if they fail with 413, raise the proxy body size.
+   - One upload is up to 60 MB (several files of up to 20 MB each); if uploads fail with 413, raise the proxy body size.
 7. **SSO Server** (its login page is DSM's, so give it its own portal instead of exposing DSM):
    - Control Panel > Login Portal > Applications > SSO Server > Edit: customized domain `sso.example.com`,
      port fields empty (served on 443 like other portals). Assign the certificate to it.

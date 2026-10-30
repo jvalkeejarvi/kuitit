@@ -24,6 +24,6 @@ export function configureApiClient(): void {
   });
 }
 
-export function receiptFileUrl(id: string): string {
-  return `/api/receipts/${id}/file`;
+export function receiptFileUrl(receiptId: string, fileId: string): string {
+  return `/api/receipts/${receiptId}/files/${fileId}`;
 }

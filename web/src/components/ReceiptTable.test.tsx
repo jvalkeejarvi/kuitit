@@ -22,9 +22,7 @@ const receipt = (name: string, purchasedOn: string, expiresOn: string): ReceiptD
   purchasedOn,
   warrantyMonths: 24,
   expiresOn,
-  fileName: 'r.pdf',
-  contentType: 'application/pdf',
-  sizeBytes: 1,
+  files: [{ id: `${name}-file`, fileName: 'r.pdf', contentType: 'application/pdf', sizeBytes: 1 }],
   createdAt: '2026-01-01T00:00:00Z',
   archivedAt: null,
 });

@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  addReceiptFilesMutation,
   archiveReceiptMutation,
+  deleteReceiptFileMutation,
   deleteReceiptMutation,
   getReceiptQueryKey,
   listReceiptsQueryKey,
@@ -8,13 +10,17 @@ import {
 } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
 
-/** Archive and restore update the cached receipt and refresh both lists. */
-export function useArchiveMutations() {
+/** Mutations that return the updated receipt: cache it and refresh both lists. */
+function useReceiptUpdated() {
   const queryClient = useQueryClient();
-  const onSuccess = async (receipt: ReceiptDto) => {
+  return async (receipt: ReceiptDto) => {
     queryClient.setQueryData(getReceiptQueryKey({ path: { id: receipt.id } }), receipt);
     await queryClient.invalidateQueries({ queryKey: listReceiptsQueryKey() });
   };
+}
+
+export function useArchiveMutations() {
+  const onSuccess = useReceiptUpdated();
   return {
     archive: useMutation({ ...archiveReceiptMutation(), onSuccess }),
     unarchive: useMutation({ ...unarchiveReceiptMutation(), onSuccess }),
@@ -31,4 +37,12 @@ export function useDeleteMutation(onDeleted: () => void) {
       await queryClient.invalidateQueries({ queryKey: listReceiptsQueryKey() });
     },
   });
+}
+
+export function useFileMutations() {
+  const onSuccess = useReceiptUpdated();
+  return {
+    add: useMutation({ ...addReceiptFilesMutation(), onSuccess }),
+    remove: useMutation({ ...deleteReceiptFileMutation(), onSuccess }),
+  };
 }

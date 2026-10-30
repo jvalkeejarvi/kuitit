@@ -42,7 +42,7 @@ describe('AddReceiptForm', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(await screen.findByText('Name is required.')).toBeInTheDocument();
-    expect(screen.getByText('Add a photo or file of the receipt.')).toBeInTheDocument();
+    expect(screen.getByText('Add at least one photo or file of the receipt.')).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(createReceipt).not.toHaveBeenCalled();
   });
@@ -67,7 +67,7 @@ describe('AddReceiptForm', () => {
 
     await userEvent.type(screen.getByLabelText('Name'), '  Laptop ');
     const file = new File(['%PDF-1.7'], 'receipt.pdf', { type: 'application/pdf' });
-    await userEvent.upload(screen.getByLabelText('Receipt'), file);
+    await userEvent.upload(screen.getByLabelText('Choose files'), file);
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
@@ -75,7 +75,7 @@ describe('AddReceiptForm', () => {
       name: 'Laptop',
       purchasedOn: '2026-06-15',
       warrantyMonths: 24,
-      file,
+      files: [file],
     });
   });
 
@@ -86,7 +86,10 @@ describe('AddReceiptForm', () => {
     await userEvent.type(screen.getByLabelText('Name'), 'Laptop');
     await userEvent.type(screen.getByLabelText('Store'), ' Gigantti ');
     await userEvent.type(screen.getByLabelText('Description'), 'Serial ABC123{enter}Extra warranty ');
-    await userEvent.upload(screen.getByLabelText('Receipt'), new File(['x'], 'r.pdf', { type: 'application/pdf' }));
+    await userEvent.upload(
+      screen.getByLabelText('Choose files'),
+      new File(['x'], 'r.pdf', { type: 'application/pdf' }),
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
@@ -96,13 +99,45 @@ describe('AddReceiptForm', () => {
     });
   });
 
+  it('collects files from several picks, lets one be removed and sends the rest', async () => {
+    vi.mocked(createReceipt).mockResolvedValue({ data: {} } as never);
+    const onDone = renderForm();
+    const [a, b, c] = ['a.pdf', 'b.png', 'c.jpg'].map(name => new File(['x'], name, { type: 'application/pdf' }));
+
+    await userEvent.type(screen.getByLabelText('Name'), 'TV');
+    await userEvent.upload(screen.getByLabelText('Choose files'), [a!, b!]);
+    await userEvent.upload(screen.getByLabelText('Choose files'), c!);
+    await userEvent.click(screen.getByRole('button', { name: 'Remove b.png' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(vi.mocked(createReceipt).mock.calls[0]![0].body.files).toEqual([a, c]);
+  });
+
+  it('rejects more files than a receipt can hold', async () => {
+    renderForm();
+    const files = Array.from({ length: 11 }, (_, i) => new File(['x'], `${i}.pdf`, { type: 'application/pdf' }));
+
+    await userEvent.type(screen.getByLabelText('Name'), 'TV');
+    await userEvent.upload(screen.getByLabelText('Choose files'), files.slice(0, 6));
+    await userEvent.upload(screen.getByLabelText('Choose files'), files.slice(6));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('A receipt can have at most 10 files.')).toBeInTheDocument();
+    expect(createReceipt).not.toHaveBeenCalled();
+  });
+
   it('rejects unsupported file types', async () => {
     renderForm();
 
     await userEvent.type(screen.getByLabelText('Name'), 'Laptop');
-    await userEvent.upload(screen.getByLabelText('Receipt'), new File(['x'], 'notes.txt', { type: 'text/plain' }), {
-      applyAccept: false,
-    });
+    await userEvent.upload(
+      screen.getByLabelText('Choose files'),
+      new File(['x'], 'notes.txt', { type: 'text/plain' }),
+      {
+        applyAccept: false,
+      },
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(await screen.findByText('Only PDF, JPEG, PNG and HEIC files are allowed.')).toBeInTheDocument();
