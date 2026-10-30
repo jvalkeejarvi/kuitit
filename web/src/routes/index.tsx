@@ -48,7 +48,7 @@ const emptyText = {
   trash: 'trash.empty',
 } as const;
 
-const tabClass = 'rounded-md px-3 py-1.5 text-sm font-medium';
+const tabClass = 'flex-1 rounded-md px-3 py-1.5 text-center text-sm font-medium sm:flex-none';
 const activeTab = 'bg-white shadow-sm dark:bg-slate-800';
 const inactiveTab = 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100';
 
@@ -67,7 +67,8 @@ function ReceiptsPage() {
 
   return (
     <div className="space-y-4">
-      <nav className="flex w-fit gap-1 rounded-lg bg-slate-200 p-1 dark:bg-slate-900">
+      {/* Phones: full width, three equal parts (a segmented control); from sm up: left-aligned with the table. */}
+      <nav className="flex gap-1 rounded-lg bg-slate-200 p-1 sm:w-fit dark:bg-slate-900">
         {tabs.map(([id, label, params]) => (
           <Link
             key={id}
