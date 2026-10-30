@@ -26,7 +26,7 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      # The encrypted `kuitit` shared folder (README > Deployment), apart from this file and .env.
+      # The `kuitit` shared folder (README > Deployment), apart from this file and .env.
       - ${KUITIT_DATA_DIR:-/volume1/kuitit/data}:/data
     environment:
       Auth__Authority: ${OIDC_AUTHORITY:?set OIDC_AUTHORITY in .env}

@@ -89,10 +89,9 @@ Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
 1. **Package Center**: install **Container Manager** and **SSO Server**.
 2. **App user** (Control Panel > User): create a dedicated DSM user for the app (no admin rights, no other
    folder access). Get its UID and GID over SSH: `id <user>`.
-3. **Data folder** (Control Panel > Shared Folder > Create): name `kuitit`, tick **Encrypt this shared folder**,
-   and in the encryption step choose to mount it automatically at startup via Key Manager (store the
-   exported key somewhere safe outside the NAS). Permissions: read/write for the app user, administrators only
-   otherwise. Inside it create `data` (File Station). Receipts and the database live here, encrypted at rest.
+3. **Data folder** (Control Panel > Shared Folder > Create): name `kuitit`. Permissions: read/write for the app
+   user, administrators only otherwise. Inside it create `data` (File Station). Receipts and the database live
+   here. (For encryption at rest, use DSM's volume encryption for the whole NAS rather than a per-folder key.)
 4. **Project folder** (File Station): in the `docker` shared folder (created by Container Manager) create
    `kuitit`. It holds only `compose.yaml` and `.env`.
 5. **Certificate** (Control Panel > Security > Certificate): add a Let's Encrypt certificate for
@@ -113,9 +112,6 @@ Replace `kuitit.example.com` with your host name. Takes about 15 minutes.
 9. **Container Manager** > Project > Create: name `kuitit`, path `docker/kuitit`, use the existing compose
    file, no web portal. It pulls the image and starts the container.
 10. Open `https://kuitit.example.com` and sign in with your DSM account.
-
-If the encrypted folder is ever not mounted (e.g. you unlock it by hand after a reboot), restart the project
-after unlocking, so the container sees the real folder.
 
 ### Update
 
