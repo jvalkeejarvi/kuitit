@@ -58,7 +58,7 @@ TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) s
 | `DATA_DIR` | SQLite DB (`app.db`), uploads (`files/`), DataProtection keys (`keys/`). `/data` in the image. |
 | `Auth__Authority` | OIDC issuer URL |
 | `Auth__ClientId` / `Auth__ClientSecret` | OIDC client |
-| `Auth__AllowedUsers__N` | Emails or subjects allowed to sign in. Empty denies everyone. |
+| `Auth__AllowedUsers__N` | Emails or subjects allowed to sign in, or `*` for anyone the IdP signs in. Empty denies everyone. |
 | `ConnectionStrings__App` | Optional DB connection string override |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional. Exports traces, metrics and logs over OTLP (set automatically by Aspire in dev). |
 
@@ -83,6 +83,10 @@ Logs: `docker compose logs -f kuitit` over SSH. Rotated at 3 x 10 MB (`x-logging
 Telemetry dashboard (optional): set `OTEL_EXPORTER_OTLP_ENDPOINT` and `DASHBOARD_TOKEN` in `.env`, run
 `docker compose --profile dashboard up -d`, and add a reverse proxy rule for `localhost:18888` (enable WebSocket
 headers). Data is in memory only.
+
+Users: with `ALLOWED_USER_1=*` every DSM account can sign in, so inviting someone means creating them a DSM user
+(Control Panel > User). Keep the Guest account disabled. To restrict, list emails or subjects in
+`ALLOWED_USER_N` instead and restart. Receipts are always private to their owner.
 
 "OIDC callback failed" behind the proxy is almost always the external URL or `X-Forwarded-Proto` not matching
 the redirect URI registered in SSO Server.
