@@ -19,6 +19,64 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
   </ItemGroup>
 
+  <!-- Image: `dotnet publish src/Kuitit.Api -t:PublishContainer` (needs Bun for the SPA, not Docker).
+       Base is mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled: no shell, non-root. -->
+  <PropertyGroup Label="Container">
+    <ContainerRepository>kuitit</ContainerRepository>
+    <ContainerFamily>noble-chiseled</ContainerFamily>
+    <!-- Synology x86 and ARM models. -->
+    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
+    <!-- Restore the per-RID assets the inner publishes need; plain builds and tests stay RID-less. -->
+    <RuntimeIdentifiers Condition="'$(_IsPublishing)' == 'true'">$(ContainerRuntimeIdentifiers)</RuntimeIdentifiers>
+    <!-- Per-RID inner publishes only; set unconditionally it would pin the host RID and skip the multi-arch path. -->
+    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
+    <!-- Committed web/openapi.json is the contract; publishing doesn't regenerate it. -->
+    <OpenApiGenerateDocuments Condition="'$(_IsPublishing)' == 'true'">false</OpenApiGenerateDocuments>
+  </PropertyGroup>
+
+  <ItemGroup Label="Container">
+    <ContainerPort Include="8080" Type="tcp" />
+    <ContainerEnvironmentVariable Include="DATA_DIR" Value="/data" />
+    <!-- Low idle memory on a NAS. -->
+    <ContainerEnvironmentVariable Include="DOTNET_gcServer" Value="0" />
+    <ContainerEnvironmentVariable Include="DOTNET_GCConserveMemory" Value="5" />
+    <ContainerEnvironmentVariable Include="DOTNET_TieredPGO" Value="0" />
+    <ContainerLabel Include="org.opencontainers.image.source" Value="https://github.com/jvalkeejarvi/kuitit" />
+  </ItemGroup>
+
+  <!-- The SPA is built once before publishing (multi-RID container publishes run Publish per RID in parallel,
+       hence the up-to-date check) and served from wwwroot. SkipWebBuild=true publishes the API alone. -->
+  <PropertyGroup>
+    <WebRoot>$(MSBuildProjectDirectory)/../../web/</WebRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <WebBuildInput Include="$(WebRoot)src/**;$(WebRoot)public/**" />
+    <WebBuildInput Include="$(WebRoot)index.html;$(WebRoot)package.json;$(WebRoot)bun.lock;$(WebRoot)*.config.ts" />
+  </ItemGroup>
+
+  <Target
+    Name="BuildWeb"
+    BeforeTargets="PublishContainer;Publish"
+    Condition="'$(SkipWebBuild)' != 'true'"
+    Inputs="@(WebBuildInput)"
+    Outputs="$(WebRoot)dist/index.html"
+  >
+    <Exec Command="bun install --frozen-lockfile" WorkingDirectory="$(WebRoot)" />
+    <Exec Command="bun run build" WorkingDirectory="$(WebRoot)" />
+  </Target>
+
+  <Target Name="IncludeWeb" AfterTargets="ComputeFilesToPublish" Condition="'$(SkipWebBuild)' != 'true'">
+    <ItemGroup>
+      <WebDistFile Include="$(WebRoot)dist/**" />
+      <ResolvedFileToPublish Include="@(WebDistFile->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot/%(WebDistFile.RecursiveDir)%(WebDistFile.Filename)%(WebDistFile.Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Kuitit.Api.Tests" />
     <InternalsVisibleTo Include="Kuitit.DevSeed" />

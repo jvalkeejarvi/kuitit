@@ -1,6 +1,7 @@
 name: Release
 
-# Push a tag like v0.1.0 to publish ghcr.io/<owner>/kuitit:0.1.0 (+ :latest).
+# Push a tag like v0.1.0 to publish ghcr.io/<owner>/kuitit:0.1.0 (+ :latest) for linux/amd64 and linux/arm64.
+# The image is built by the .NET SDK (container settings live in src/Kuitit.Api/Kuitit.Api.csproj).
 on:
   push:
     tags: ['v*.*.*']
@@ -10,11 +11,10 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/kuitit
-  # Synology x86 models. Add linux/arm64 for ARM NAS models (doubles GHCR storage per version).
-  PLATFORMS: linux/amd64
-  # GHCR free tier has 500 MB for private packages.
-  KEEP_VERSIONS: 3
+  IMAGE_REPOSITORY: ${{ github.repository_owner }}/kuitit
+  # Each release is 3 package versions (index + amd64 + arm64), so this keeps the last 3 releases.
+  # GHCR free tier has 500 MB for private packages; the chiseled base layers are shared between releases.
+  KEEP_VERSIONS: 9
 
 jobs:
   image:
@@ -22,38 +22,28 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: web/package.json
 
-      - uses: docker/setup-qemu-action@v4
-        if: contains(env.PLATFORMS, ',')
-      - uses: docker/setup-buildx-action@v4
-
+      # The SDK pushes with the credentials docker login stores.
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.IMAGE }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest
-
-      - uses: docker/build-push-action@v7
-        with:
-          context: .
-          platforms: ${{ env.PLATFORMS }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: VERSION=${{ steps.meta.outputs.version }}
-          # One package version per release, so retention below counts releases, not attestation manifests.
-          provenance: false
-          sbom: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Publish image
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          dotnet publish src/Kuitit.Api -c Release -t:PublishContainer \
+            -p:Version="$version" \
+            -p:ContainerRegistry=ghcr.io \
+            -p:ContainerRepository="${IMAGE_REPOSITORY,,}" \
+            -p:ContainerImageTags="\"$version;latest\""
 
       - name: Delete old image versions
         uses: actions/delete-package-versions@v5
