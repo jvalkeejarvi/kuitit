@@ -78,7 +78,8 @@ app.Use(
     }
 );
 app.UseDefaultFiles();
-app.UseStaticFiles(SpaFiles.Options);
+var spaFiles = SpaFiles.Create(SpaFiles.ContentSecurityPolicy(app.Configuration["Auth:Authority"]!));
+app.UseStaticFiles(spaFiles);
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -86,7 +87,7 @@ app.MapOpenApi();
 app.MapHealthChecks("/healthz");
 app.MapAuth();
 app.MapApi();
-app.MapSpaFallback();
+app.MapSpaFallback(spaFiles);
 
 app.Run();
 

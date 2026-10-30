@@ -6,15 +6,8 @@
     <meta name="theme-color" content="#0f766e" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>Takuukuitit</title>
-    <script>
-      // Applied before first paint so dark mode doesn't flash; src/lib/theme.ts keeps it in sync afterwards.
-      try {
-        var t = localStorage.getItem('kuitit.theme');
-        var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-        document.documentElement.classList.toggle('dark', dark);
-        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-      } catch (e) {}
-    </script>
+    <!-- Classic (blocking) script: sets the theme before first paint. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

@@ -24,6 +24,8 @@ public sealed class SpaCachingTests : IAsyncLifetime
         response.Content.Headers.ContentType!.MediaType.Should().Be("text/html");
         response.Headers.CacheControl!.NoCache.Should().BeTrue();
         response.Headers.ETag.Should().NotBeNull();
+        var csp = response.Headers.GetValues("Content-Security-Policy").Should().ContainSingle().Subject;
+        csp.Should().Contain("script-src 'self';").And.Contain($"form-action 'self' {ApiFactory.Issuer};");
     }
 
     [Fact]
