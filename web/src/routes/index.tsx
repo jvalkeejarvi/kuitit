@@ -6,8 +6,13 @@ import { z } from 'zod';
 import { listReceiptsOptions } from '@/api/client/@tanstack/react-query.gen';
 import { AddReceiptForm } from '@/components/AddReceiptForm';
 import { ReceiptTable } from '@/components/ReceiptTable';
+import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
 
-const searchSchema = z.object({ archived: z.boolean().optional() });
+const searchSchema = z.object({
+  archived: z.boolean().optional(),
+  sort: z.enum(sortColumns).optional(),
+  desc: z.boolean().optional(),
+});
 
 export const Route = createFileRoute('/')({
   validateSearch: searchSchema,
@@ -23,7 +28,10 @@ const inactiveTab = 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dar
 
 function ReceiptsPage() {
   const { t } = useTranslation();
-  const archived = Route.useSearch().archived ?? false;
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const archived = search.archived ?? false;
+  const sort: ReceiptSort = { column: search.sort ?? 'expiresOn', desc: search.desc ?? false };
   const { data: receipts = [] } = useQuery(listReceiptsOptions({ query: { archived } }));
   const [adding, setAdding] = useState(false);
 
@@ -31,10 +39,18 @@ function ReceiptsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <nav className="mr-auto flex gap-1 rounded-lg bg-slate-200 p-1 dark:bg-slate-900">
-          <Link to="/" search={{}} className={`${tabClass} ${archived ? inactiveTab : activeTab}`}>
+          <Link
+            to="/"
+            search={prev => ({ ...prev, archived: undefined })}
+            className={`${tabClass} ${archived ? inactiveTab : activeTab}`}
+          >
             {t('receipts.active')}
           </Link>
-          <Link to="/" search={{ archived: true }} className={`${tabClass} ${archived ? activeTab : inactiveTab}`}>
+          <Link
+            to="/"
+            search={prev => ({ ...prev, archived: true })}
+            className={`${tabClass} ${archived ? activeTab : inactiveTab}`}
+          >
             {t('receipts.archived')}
           </Link>
         </nav>
@@ -56,7 +72,16 @@ function ReceiptsPage() {
           {archived ? t('receipts.emptyArchived') : t('receipts.emptyActive')}
         </p>
       ) : (
-        <ReceiptTable receipts={receipts} />
+        <ReceiptTable
+          receipts={receipts}
+          sort={sort}
+          onSortChange={next =>
+            void navigate({
+              search: prev => ({ ...prev, sort: next.column, desc: next.desc || undefined }),
+              replace: true,
+            })
+          }
+        />
       )}
     </div>
   );
