@@ -74,6 +74,8 @@ TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) s
 5. Update: bump `KUITIT_VERSION` in `.env`, then `docker compose pull && docker compose up -d`. Migrations run at
    startup, so take a backup first.
 
+Logs: `docker compose logs -f kuitit` over SSH. Rotated at 3 x 10 MB (`x-logging` in `compose.yaml`).
+
 "OIDC callback failed" behind the proxy is almost always the external URL or `X-Forwarded-Proto` not matching
 the redirect URI registered in SSO Server.
 

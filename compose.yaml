@@ -1,9 +1,17 @@
 # Synology Container Manager "Project". Copy next to a .env file (see .env.example) and run:
 #   docker compose pull && docker compose up -d
+# Rotate container logs so they don't fill the volume. `docker logs` still reads them.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
 services:
   kuitit:
     image: ghcr.io/jvalkeejarvi/kuitit:${KUITIT_VERSION:?set KUITIT_VERSION in .env}
     restart: unless-stopped
+    logging: *logging
     # UID:GID of the DSM service user that owns the data folder.
     user: "${KUITIT_UID:?}:${KUITIT_GID:?}"
     read_only: true
