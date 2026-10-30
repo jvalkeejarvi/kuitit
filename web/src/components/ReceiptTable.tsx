@@ -14,18 +14,13 @@ import type { ReceiptDto } from '@/api/client/types.gen';
 import { StatusBadge } from '@/components/StatusBadge';
 import { confirmArchive } from '@/lib/confirmations';
 import { expiryStatus, formatDate } from '@/lib/dates';
-import { sortColumns, type ReceiptSort, type SortColumn } from '@/lib/receiptSort';
+import type { ReceiptSort, SortColumn } from '@/lib/receiptSort';
 import { useArchiveMutations } from '@/lib/receiptMutations';
 import { useDialog } from '@/lib/useDialog';
 
 const column = createColumnHelper<ReceiptDto>();
 
-// Hidden on phones so the name has room; the sort picker and the detail page cover them there.
-const columnClass: Partial<Record<string, string>> = {
-  purchasedOn: 'hidden sm:table-cell',
-  expired: 'hidden sm:table-cell',
-  actions: 'w-0',
-};
+const columnClass: Partial<Record<string, string>> = { actions: 'w-0' };
 
 export function ReceiptTable({
   receipts,
@@ -115,90 +110,57 @@ export function ReceiptTable({
   });
 
   return (
-    <div className="space-y-2">
-      <SortPicker sort={sort} onSortChange={onSortChange} />
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            {table.getHeaderGroups().map(group => (
-              <tr key={group.id}>
-                {group.headers.map(header => {
-                  const sorted = header.column.getIsSorted();
-                  const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
-                  return (
-                    <th
-                      key={header.id}
-                      aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                      className={`px-3 py-2 font-medium sm:px-4 ${columnClass[header.id] ?? ''}`}
-                    >
-                      {header.column.getCanSort() ? (
-                        <button
-                          type="button"
-                          onClick={header.column.getToggleSortingHandler()}
-                          className="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100"
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          <SortIcon className={`size-3.5 shrink-0 ${sorted ? '' : 'opacity-40'}`} aria-hidden />
-                        </button>
-                      ) : (
-                        flexRender(header.column.columnDef.header, header.getContext())
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id}>
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className={`px-3 py-3 sm:px-4 ${columnClass[cell.column.id] ?? ''}`}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    // All columns everywhere; cells don't wrap, so on narrow screens the table scrolls inside its box.
+    // `relative` keeps absolutely positioned content (the sr-only header) inside it, not widening the page.
+    <div className="relative overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <table className="w-full text-left text-sm whitespace-nowrap">
+        <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
+          {table.getHeaderGroups().map(group => (
+            <tr key={group.id}>
+              {group.headers.map(header => {
+                const sorted = header.column.getIsSorted();
+                const SortIcon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
+                return (
+                  <th
+                    key={header.id}
+                    aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
+                    className={`px-3 py-2 font-medium sm:px-4 ${columnClass[header.id] ?? ''}`}
+                  >
+                    {header.column.getCanSort() ? (
+                      <button
+                        type="button"
+                        onClick={header.column.getToggleSortingHandler()}
+                        className="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100"
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        <SortIcon className={`size-3.5 shrink-0 ${sorted ? '' : 'opacity-40'}`} aria-hidden />
+                      </button>
+                    ) : (
+                      flexRender(header.column.columnDef.header, header.getContext())
+                    )}
+                  </th>
+                );
+              })}
+            </tr>
+          ))}
+        </thead>
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id} className={`px-3 py-3 sm:px-4 ${columnClass[cell.column.id] ?? ''}`}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
 /** Phones hide some columns, so sorting there goes through this instead of the headers. */
-function SortPicker({ sort, onSortChange }: { sort: ReceiptSort; onSortChange: (sort: ReceiptSort) => void }) {
-  const { t } = useTranslation();
-  const DirectionIcon = sort.desc ? ArrowDown : ArrowUp;
-  return (
-    <div className="flex items-center justify-end gap-2 text-sm sm:hidden">
-      <label htmlFor="sort" className="text-slate-500 dark:text-slate-400">
-        {t('receipts.sortBy')}
-      </label>
-      <select
-        id="sort"
-        value={sort.column}
-        onChange={e => onSortChange({ column: e.target.value as SortColumn, desc: false })}
-        className="rounded-md border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-950"
-      >
-        {sortColumns.map(c => (
-          <option key={c} value={c}>
-            {t(`receipts.${c}`)}
-          </option>
-        ))}
-      </select>
-      <button
-        type="button"
-        aria-label={sort.desc ? t('receipts.sortDescending') : t('receipts.sortAscending')}
-        title={sort.desc ? t('receipts.sortDescending') : t('receipts.sortAscending')}
-        onClick={() => onSortChange({ ...sort, desc: !sort.desc })}
-        className="rounded-md border border-slate-300 p-1.5 dark:border-slate-700"
-      >
-        <DirectionIcon className="size-4" aria-hidden />
-      </button>
-    </div>
-  );
-}
 
 function ArchiveButton({ receipt }: { receipt: ReceiptDto }) {
   const { t } = useTranslation();
