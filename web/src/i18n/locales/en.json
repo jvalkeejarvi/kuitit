@@ -139,5 +139,10 @@
   },
   "menu": {
     "label": "Menu"
+  },
+  "search": {
+    "label": "Search receipts",
+    "placeholder": "Search by name, store or description",
+    "noResults": "No matching receipts."
   }
 }

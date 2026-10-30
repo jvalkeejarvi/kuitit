@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { listReceiptsOptions, listTrashOptions } from '@/api/client/@tanstack/react-query.gen';
@@ -7,6 +9,7 @@ import type { ReceiptDto } from '@/api/client/types.gen';
 import { ReceiptForm } from '@/components/ReceiptForm';
 import { ReceiptTable } from '@/components/ReceiptTable';
 import { TrashTable } from '@/components/TrashTable';
+import { filterReceipts } from '@/lib/receiptSearch';
 import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
 
 const searchSchema = z.object({
@@ -17,6 +20,8 @@ const searchSchema = z.object({
   // .catch: an unknown column (e.g. an old link) falls back to the default sort instead of an error page.
   sort: z.enum(sortColumns).optional().catch(undefined),
   desc: z.boolean().optional(),
+  /** Search text; kept in the URL so it survives opening a receipt and coming back. */
+  q: z.string().optional(),
 });
 
 export const Route = createFileRoute('/')({
@@ -53,7 +58,7 @@ const activeTab = 'bg-white shadow-sm dark:bg-slate-800';
 const inactiveTab = 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100';
 
 function ReceiptsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const tab: Tab = search.trash ? 'trash' : search.archived ? 'archived' : 'active';
@@ -63,23 +68,48 @@ function ReceiptsPage() {
     enabled: tab !== 'trash',
   });
   const { data: trash = noReceipts } = useQuery({ ...listTrashOptions(), enabled: tab === 'trash' });
-  const shown = tab === 'trash' ? trash : receipts;
+  // Typed into local state (a controlled input fed from the URL would lag), mirrored to ?q= for back navigation.
+  const [query, setQuery] = useState(search.q ?? '');
+  const filtered = useMemo(
+    () => filterReceipts(tab === 'trash' ? trash : receipts, query, i18n.language),
+    [tab, trash, receipts, query, i18n.language],
+  );
+  const total = tab === 'trash' ? trash.length : receipts.length;
 
   return (
     <div className="space-y-4">
-      {/* Phones: full width, three equal parts (a segmented control); from sm up: left-aligned with the table. */}
-      <nav className="flex gap-1 rounded-lg bg-slate-200 p-1 sm:w-fit dark:bg-slate-900">
-        {tabs.map(([id, label, params]) => (
-          <Link
-            key={id}
-            to="/"
-            search={prev => ({ ...prev, archived: undefined, trash: undefined, ...params })}
-            className={`${tabClass} ${tab === id ? activeTab : inactiveTab}`}
-          >
-            {t(label)}
-          </Link>
-        ))}
-      </nav>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Phones: full width, three equal parts (a segmented control); from sm up: left-aligned with the table. */}
+        <nav className="flex gap-1 rounded-lg bg-slate-200 p-1 sm:w-fit dark:bg-slate-900">
+          {tabs.map(([id, label, params]) => (
+            <Link
+              key={id}
+              to="/"
+              search={prev => ({ ...prev, archived: undefined, trash: undefined, ...params })}
+              className={`${tabClass} ${tab === id ? activeTab : inactiveTab}`}
+            >
+              {t(label)}
+            </Link>
+          ))}
+        </nav>
+        <label className="relative sm:w-72">
+          <span className="sr-only">{t('search.label')}</span>
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={query}
+            placeholder={t('search.placeholder')}
+            onChange={e => {
+              setQuery(e.target.value);
+              void navigate({ search: prev => ({ ...prev, q: e.target.value || undefined }), replace: true });
+            }}
+            className="h-9 w-full rounded-md border border-slate-300 bg-white pr-3 pl-9 text-sm dark:border-slate-700 dark:bg-slate-900"
+          />
+        </label>
+      </div>
 
       {search.add && (
         <ReceiptForm
@@ -89,13 +119,15 @@ function ReceiptsPage() {
         />
       )}
 
-      {shown.length === 0 ? (
-        <p className="py-12 text-center text-slate-500 dark:text-slate-400">{t(emptyText[tab])}</p>
+      {filtered.length === 0 ? (
+        <p className="py-12 text-center text-slate-500 dark:text-slate-400">
+          {total === 0 ? t(emptyText[tab]) : t('search.noResults')}
+        </p>
       ) : tab === 'trash' ? (
-        <TrashTable receipts={trash} />
+        <TrashTable receipts={filtered} />
       ) : (
         <ReceiptTable
-          receipts={receipts}
+          receipts={filtered}
           sort={sort}
           onSortChange={next =>
             void navigate({

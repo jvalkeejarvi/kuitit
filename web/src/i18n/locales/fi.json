@@ -139,5 +139,10 @@
   },
   "menu": {
     "label": "Valikko"
+  },
+  "search": {
+    "label": "Hae kuitteja",
+    "placeholder": "Hae nimellä, kaupalla tai kuvauksella",
+    "noResults": "Ei hakua vastaavia kuitteja."
   }
 }
