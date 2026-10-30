@@ -44,6 +44,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         Directory.CreateDirectory(Path.Combine(root, "assets"));
         File.WriteAllText(Path.Combine(root, "index.html"), "<!doctype html><title>Kuitit</title>");
         File.WriteAllText(Path.Combine(root, "assets", "index-abc123.js"), "console.log(1);");
+        File.WriteAllText(Path.Combine(root, "manifest.webmanifest"), """{ "name": "Kuitit" }""");
         return root;
     }
 

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full bleed; the receipt stays inside the central 80% safe zone, so any mask shape (circle, squircle) keeps it. -->
+  <rect width="512" height="512" fill="#0f766e"/>
+  <rect x="176" y="128" width="160" height="256" rx="22" fill="#fff"/>
+  <path d="M212 206h88M212 256h88M212 306h52" stroke="#0f766e" stroke-width="20" stroke-linecap="round"/>
+</svg>

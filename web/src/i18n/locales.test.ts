@@ -13,10 +13,11 @@ it('Finnish has exactly the same keys as English', () => {
 });
 
 describe('document title', () => {
-  it('follows the UI language', async () => {
+  // The app name is "Kuitit" in every language for now; the title still comes from the translations.
+  it('is the app name from the UI language', async () => {
     await i18n.changeLanguage('en');
-    expect(document.title).toBe('Warranty receipts');
+    expect(document.title).toBe('Kuitit');
     await i18n.changeLanguage('fi');
-    expect(document.title).toBe('Takuukuitit');
+    expect(document.title).toBe('Kuitit');
   });
 });

@@ -124,6 +124,10 @@ Replace `kuitit.example.com` and `sso.example.com` with your host names. Takes a
    file, no web portal. It pulls the image and starts the container.
 10. Open `https://kuitit.example.com` and sign in with your DSM account.
 
+On a phone, open the app in Chrome or Safari and choose "Install app" / "Add to Home Screen": it then opens
+full-screen with its own icon (web app manifest; icons are generated from `web/icons/*.svg` with
+`bun run icons`, which needs `rsvg-convert`).
+
 ### Update
 
 1. Back up (see below); migrations run when the new version starts.

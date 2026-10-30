@@ -47,4 +47,15 @@ public sealed class SpaCachingTests : IAsyncLifetime
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Web_app_manifest_is_served_for_installing()
+    {
+        var response = await _factory.CreateClientFor(null).GetAsync("/manifest.webmanifest", Ct);
+
+        // Static files are only served for known types, so this guards against a 404 for .webmanifest.
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/manifest+json");
+        response.Headers.CacheControl!.NoCache.Should().BeTrue();
+    }
 }
