@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace Kuitit.Api.Auth;
 
@@ -64,12 +65,16 @@ internal static class AuthSetup
         o.RequireHttpsMetadata = auth.RequireHttpsMetadata;
         o.ResponseType = "code";
         o.UsePkce = true;
+        // Synology SSO Server advertises no response_modes_supported (spec default: query) and only the openid,
+        // email and groups scopes; asking for form_post or profile risks a rejected login.
+        o.ResponseMode = OpenIdConnectResponseMode.Query;
         o.Scope.Clear();
         o.Scope.Add("openid");
-        o.Scope.Add("profile");
         o.Scope.Add("email");
         o.MapInboundClaims = false;
         o.GetClaimsFromUserInfoEndpoint = true;
+        // Synology has no `name`; its `username` (the DSM account) is the display fallback.
+        o.ClaimActions.MapUniqueJsonKey(AppClaims.Username, AppClaims.Username);
         o.SaveTokens = true;
         o.TokenValidationParameters.NameClaimType = AppClaims.Name;
         o.Events.OnTokenValidated = ctx =>

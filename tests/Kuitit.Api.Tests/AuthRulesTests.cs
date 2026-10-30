@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Kuitit.Api.Auth;
 
 namespace Kuitit.Api.Tests;
@@ -48,5 +49,17 @@ public sealed class AuthRulesTests
     public void Return_urls_must_be_local(string? url, bool local)
     {
         AuthSetup.IsLocalUrl(url).Should().Be(local);
+    }
+
+    [Fact]
+    public void Display_name_falls_back_to_username_claim()
+    {
+        var principal = new ClaimsPrincipal(
+            new ClaimsIdentity([new Claim("sub", "1026", null, "https://nas"), new Claim("username", "juuso")], "oidc")
+        );
+
+        var user = HttpContextCurrentUser.FromPrincipal(principal);
+
+        user.Should().Be(new UserIdentity("https://nas", "1026", "", "juuso"));
     }
 }

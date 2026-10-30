@@ -21,6 +21,8 @@ public sealed class AuthEndpointTests : IAsyncLifetime
         var location = response.Headers.Location!.ToString();
         location.Should().StartWith($"{ApiFactory.Issuer}/authorize?");
         location.Should().Contain("code_challenge_method=S256").And.NotContain("prompt=");
+        // What Synology SSO Server supports: the default (query) response mode and no `profile` scope.
+        location.Should().NotContain("response_mode=").And.Contain("&scope=openid email&");
     }
 
     [Fact]

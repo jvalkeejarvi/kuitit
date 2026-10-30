@@ -27,7 +27,7 @@ internal sealed class HttpContextCurrentUser(IHttpContextAccessor accessor) : IC
             sub.Issuer,
             sub.Value,
             principal.FindFirst(AppClaims.Email)?.Value ?? "",
-            principal.FindFirst(AppClaims.Name)?.Value
+            principal.FindFirst(AppClaims.Name)?.Value ?? principal.FindFirst(AppClaims.Username)?.Value
         );
     }
 }
@@ -37,4 +37,7 @@ public static class AppClaims
     public const string Subject = "sub";
     public const string Email = "email";
     public const string Name = "name";
+
+    /// <summary>Synology SSO Server's account name; used when there is no `name`.</summary>
+    public const string Username = "username";
 }
