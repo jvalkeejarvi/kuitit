@@ -1,12 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import { Menu, Plus, X } from 'lucide-react';
+import { ChevronDown, Menu, Plus, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languages, type Language } from '@/i18n';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
+// Every control in the bar is h-9 (36px). The select drops its native look (Safari ignores a native select's
+// height) and draws its own chevron.
 const selectClass =
-  'rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900';
+  'h-9 appearance-none rounded-md border border-slate-300 bg-white pr-8 pl-3 text-sm dark:border-slate-700 dark:bg-slate-900';
 
 /**
  * `user` is the signed-in user's label (email, else name); undefined when signed out.
@@ -42,7 +44,7 @@ export function Header({ user }: { user: string | undefined }) {
             to="/"
             search={prev => ({ ...prev, add: true })}
             title={t('receipts.add')}
-            className="inline-flex size-9 items-center justify-center gap-1.5 rounded-full bg-brand font-medium text-white hover:bg-brand-dark sm:size-auto sm:rounded-md sm:px-3 sm:py-1.5 sm:text-sm"
+            className="inline-flex size-9 items-center justify-center gap-1.5 rounded-full bg-brand font-medium text-white hover:bg-brand-dark sm:h-9 sm:w-auto sm:rounded-md sm:px-3 sm:text-sm"
           >
             <Plus className="size-5" aria-hidden />
             <span className="sr-only sm:not-sr-only">{t('receipts.add')}</span>
@@ -54,7 +56,7 @@ export function Header({ user }: { user: string | undefined }) {
           aria-controls="header-menu"
           aria-label={t('menu.label')}
           onClick={() => setOpen(o => !o)}
-          className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100 sm:hidden dark:text-slate-300 dark:hover:bg-slate-800"
+          className="inline-flex size-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 sm:hidden dark:text-slate-300 dark:hover:bg-slate-800"
         >
           {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
         </button>
@@ -67,18 +69,24 @@ export function Header({ user }: { user: string | undefined }) {
             <label className="text-sm sm:sr-only" htmlFor="language">
               {t('language.label')}
             </label>
-            <select
-              id="language"
-              className={`${selectClass} justify-self-start`}
-              value={i18n.resolvedLanguage}
-              onChange={e => void i18n.changeLanguage(e.target.value as Language)}
-            >
-              {languages.map(lng => (
-                <option key={lng} value={lng}>
-                  {t(`language.${lng}`)}
-                </option>
-              ))}
-            </select>
+            <span className="relative justify-self-start">
+              <select
+                id="language"
+                className={selectClass}
+                value={i18n.resolvedLanguage}
+                onChange={e => void i18n.changeLanguage(e.target.value as Language)}
+              >
+                {languages.map(lng => (
+                  <option key={lng} value={lng}>
+                    {t(`language.${lng}`)}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-slate-500"
+                aria-hidden
+              />
+            </span>
           </div>
           <div className="contents sm:flex sm:items-center">
             <span className="text-sm sm:hidden" aria-hidden>
@@ -95,7 +103,7 @@ export function Header({ user }: { user: string | undefined }) {
               {user && <span className="text-sm text-slate-600 dark:text-slate-400">{user}</span>}
               <button
                 type="submit"
-                className="ml-auto rounded-md px-2 py-1 text-sm hover:bg-slate-100 sm:ml-0 dark:hover:bg-slate-800"
+                className="ml-auto h-9 rounded-md px-3 text-sm hover:bg-slate-100 sm:ml-0 dark:hover:bg-slate-800"
               >
                 {t('auth.logout')}
               </button>
