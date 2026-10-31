@@ -130,7 +130,9 @@ full-screen with its own icon (web app manifest; icons are generated from `web/i
 
 ### Update
 
-1. Back up (see below); migrations run when the new version starts.
+1. Migrations run when the new version starts. Before migrating, the app copies the database to
+   `data/backups/app-<UTC time>-<last applied migration>.db` and keeps the newest 5 (only when there are
+   migrations to run). To go back to the previous release, restore that copy (see below) and set its version.
 2. Replace `docker/kuitit/compose.yaml` with the one from the new release (or set `KUITIT_VERSION` in `.env`).
 3. Container Manager > Project > `kuitit` > Action > Build. Over SSH instead, in `/volume1/docker/kuitit`:
    `docker compose pull && docker compose up -d`.
@@ -159,6 +161,10 @@ files and always copy intact; what a bad database copy would lose is their names
 
 Restore: stop the `kuitit` project, restore `data/` (including `app.db` and `app.db-wal`), delete
 `data/app.db-shm`, then start the project. If the database doesn't open, restore the previous version.
+
+Restore a pre-migration copy: stop the project, copy `data/backups/app-…-<migration>.db` over `data/app.db`,
+delete `data/app.db-wal` and `data/app.db-shm`, and start the release that ends with that migration (a newer
+release would migrate it again). Receipts added after the copy keep their files but lose their rows.
 
 Optional, for a guaranteed-consistent database copy: a nightly Task Scheduler job (user `root`) before the
 Hyper Backup run, and restore `backup/app.db` as `data/app.db` (deleting `app.db-wal` and `app.db-shm`):

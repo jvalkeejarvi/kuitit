@@ -38,13 +38,18 @@ internal static class DatabaseSetup
 
 /// <summary>Migrates on startup (single instance). A hosted service rather than code before app.Run, so tools
 /// that build the host without running it (OpenAPI generation) don't touch the database. StartingAsync runs
-/// before the server starts listening.</summary>
-internal sealed class MigrationService(IServiceScopeFactory scopeFactory) : IHostedLifecycleService
+/// before the server starts listening. A failed backup stops startup before anything is migrated.</summary>
+internal sealed class MigrationService(
+    IServiceScopeFactory scopeFactory,
+    TimeProvider time,
+    ILogger<MigrationService> logger
+) : IHostedLifecycleService
 {
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await MigrationBackup.CreateAsync(db, time, logger, cancellationToken);
         await db.Database.MigrateAsync(cancellationToken);
         if (db.Database.IsSqlite())
         {
