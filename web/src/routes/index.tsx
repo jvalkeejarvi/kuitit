@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { listReceiptsOptions, listTrashOptions } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
-import { ReceiptForm } from '@/components/ReceiptForm';
 import { ReceiptTable } from '@/components/ReceiptTable';
 import { TrashTable } from '@/components/TrashTable';
 import { filterReceipts } from '@/lib/receiptSearch';
@@ -16,8 +15,6 @@ import { sortColumns, type ReceiptSort } from '@/lib/receiptSort';
 const searchSchema = z.object({
   archived: z.boolean().optional(),
   trash: z.boolean().optional(),
-  /** The add form is open (the header's + links here from any page). */
-  add: z.boolean().optional(),
   // .catch: an unknown column (e.g. an old link) falls back to the default sort instead of an error page.
   sort: z.enum(sortColumns).optional().catch(undefined),
   desc: z.boolean().optional(),
@@ -120,14 +117,6 @@ function ReceiptsPage() {
           />
         </label>
       </div>
-
-      {search.add && (
-        <ReceiptForm
-          onDone={() => void navigate({ search: prev => ({ ...prev, add: undefined }) })}
-          // Open the new receipt, to check it and add more files.
-          onSaved={receipt => void navigate({ to: '/receipts/$id', params: { id: receipt.id } })}
-        />
-      )}
 
       {filtered.length === 0 ? (
         <p className="py-12 text-center text-slate-500 dark:text-slate-400">

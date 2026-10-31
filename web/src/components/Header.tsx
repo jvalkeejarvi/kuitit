@@ -44,8 +44,7 @@ export function Header({ user }: { user: string | undefined }) {
         {user !== undefined && (
           // The app's main action, always in the same place: a round + on phones, + with text from sm up.
           <Link
-            to="/"
-            search={prev => ({ ...prev, add: true })}
+            to="/receipts/new"
             title={t('receipts.add')}
             className="inline-flex size-9 items-center justify-center gap-1.5 rounded-full bg-brand font-medium text-white hover:bg-brand-dark sm:h-9 sm:w-auto sm:rounded-md sm:px-3 sm:text-sm"
           >

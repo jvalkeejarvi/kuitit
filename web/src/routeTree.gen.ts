@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReceiptsIdRouteImport } from './routes/receipts/$id'
+import { Route as ReceiptsNewRouteImport } from './routes/receipts/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const ReceiptsIdRoute = ReceiptsIdRouteImport.update({
   path: '/receipts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReceiptsNewRoute = ReceiptsNewRouteImport.update({
+  id: '/receipts/new',
+  path: '/receipts/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/receipts/$id': typeof ReceiptsIdRoute
+  '/receipts/new': typeof ReceiptsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/receipts/$id': typeof ReceiptsIdRoute
+  '/receipts/new': typeof ReceiptsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/receipts/$id': typeof ReceiptsIdRoute
+  '/receipts/new': typeof ReceiptsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/receipts/$id'
+  fullPaths: '/' | '/receipts/$id' | '/receipts/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/receipts/$id'
-  id: '__root__' | '/' | '/receipts/$id'
+  to: '/' | '/receipts/$id' | '/receipts/new'
+  id: '__root__' | '/' | '/receipts/$id' | '/receipts/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ReceiptsIdRoute: typeof ReceiptsIdRoute
+  ReceiptsNewRoute: typeof ReceiptsNewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReceiptsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/receipts/new': {
+      id: '/receipts/new'
+      path: '/receipts/new'
+      fullPath: '/receipts/new'
+      preLoaderRoute: typeof ReceiptsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ReceiptsIdRoute: ReceiptsIdRoute,
+  ReceiptsNewRoute: ReceiptsNewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

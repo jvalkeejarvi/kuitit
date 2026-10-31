@@ -54,9 +54,9 @@ describe('Header menu (phones)', () => {
     expect(menu()).not.toHaveClass('hidden');
   });
 
-  it('links + to the add form', async () => {
+  it('links + to the new receipt page', async () => {
     await renderHeader();
 
-    expect(screen.getByRole('link', { name: 'Lisää kuitti' })).toHaveAttribute('href', '/?add=true');
+    expect(screen.getByRole('link', { name: 'Lisää kuitti' })).toHaveAttribute('href', '/receipts/new');
   });
 });
