@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getReceiptOptions } from '@/api/client/@tanstack/react-query.gen';
 import type { ReceiptDto } from '@/api/client/types.gen';
+import { Linkify } from '@/components/Linkify';
 import { ReceiptFiles } from '@/components/ReceiptFiles';
 import { ReceiptForm } from '@/components/ReceiptForm';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -101,7 +102,9 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
               </Detail>
               {receipt.description && (
                 <Detail label={t('detail.description')}>
-                  <span className="whitespace-pre-wrap">{receipt.description}</span>
+                  <span className="whitespace-pre-wrap">
+                    <Linkify text={receipt.description} />
+                  </span>
                 </Detail>
               )}
               <Detail label={t('detail.added')}>{formatTimestamp(receipt.createdAt, lang)}</Detail>

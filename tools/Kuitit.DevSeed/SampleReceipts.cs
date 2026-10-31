@@ -96,7 +96,13 @@ internal static class SampleReceipts
             new("Ilmalämpöpumppu", "Bauhaus", "Mitsubishi MSZ-LN35, asennus sis.", today.AddMonths(-8), 60),
             new("Kodinkoneiden lisäturva", "Gigantti", null, today.AddMonths(-19), 36),
             new("Sohva", "Sotka", "Kangasverhoilu, 3-istuttava", today.AddMonths(-27), 24),
-            new("Robotti-imuri", "Power", "Roborock S8", today.AddMonths(-5), 24),
+            new(
+                "Robotti-imuri",
+                "Power",
+                "Roborock S8.\nKäyttöohje: https://www.roborock.com/pages/support (kohta Lataus).",
+                today.AddMonths(-5),
+                24
+            ),
             new("Näyttö", "Jimm's PC-Store", "27\" 4K", today.AddMonths(-15), 36),
             new("Ompelukone", "Tokmanni", null, today.AddMonths(-31), 24),
             new("Leivänpaahdin", "Prisma", null, today.AddMonths(-11).AddDays(-25), 12),
