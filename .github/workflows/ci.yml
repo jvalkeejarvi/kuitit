@@ -25,8 +25,6 @@ jobs:
       - run: dotnet csharpier check .
       - run: dotnet build -c Release
       - run: dotnet test -c Release --no-build
-      - name: OpenAPI document is up to date
-        run: git diff --exit-code -- web/openapi.json
 
   web:
     runs-on: ubuntu-latest
@@ -40,8 +38,6 @@ jobs:
         with:
           bun-version-file: web/package.json
       - run: bun install --frozen-lockfile
-      - name: Generated API client is up to date
-        run: bun run client && git diff --exit-code -- src/api/client
       - run: bun run lint
       - run: bun run format:check
       - run: bun run build
@@ -62,3 +58,17 @@ jobs:
       - run: dotnet publish src/Kuitit.Api -c Release -o publish
       - name: Published app includes the SPA
         run: test -f publish/wwwroot/index.html && ls publish/wwwroot/assets | grep -q '\.js$'
+      # The committed TS client must match the API's OpenAPI document, which only Development serves.
+      - name: Generated API client is up to date
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://127.0.0.1:5099
+          DATA_DIR: ${{ runner.temp }}/kuitit
+          Auth__Authority: https://idp.invalid
+          Auth__ClientId: ci
+          Auth__ClientSecret: ci
+        run: |
+          (cd publish && dotnet Kuitit.Api.dll) &
+          timeout 30 bash -c 'until curl -sf -o /dev/null http://127.0.0.1:5099/healthz; do sleep 0.5; done'
+          (cd web && bun run client)
+          git diff --exit-code -- web/src/api/client

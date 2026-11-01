@@ -15,7 +15,7 @@ Runs as a single container on a Synology NAS and signs in with OIDC (Synology SS
 | `src/Kuitit.AppHost` | Aspire orchestration for local dev |
 | `tools/Kuitit.DevSeed` | Sample receipts for user `dev`, run by the AppHost |
 | `tests/Kuitit.Api.Tests` | xUnit v3 integration tests (`WebApplicationFactory`, header auth, temp SQLite) |
-| `web/` | Vite app; `web/openapi.json` is written by the API build, the TS client is generated from it |
+| `web/` | Vite app; the TS client in `src/api/client` is generated from the running API's OpenAPI document |
 
 ## Development
 
@@ -43,10 +43,11 @@ dotnet ef migrations add <Name> -p src/Kuitit.Api -o Data/Migrations
 
 cd web
 bun run check-all                 # oxlint, prettier, tsc, vitest
-bun run client                    # regenerate the API client after an API change (after dotnet build)
+bun run client                    # regenerate the API client after an API change (API running)
 ```
 
-API changes: `dotnet build` rewrites `web/openapi.json`; then `bun run client`. CI fails if either is stale.
+API changes: with the AppHost running, `bun run client` reads `/openapi/v1.json` (Development only) and rewrites
+`src/api/client`. Commit the result; CI doesn't check that it's up to date.
 
 TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) stays only because
 `@hey-api/openapi-ts` needs the compiler JS API that TS 7 does not ship yet; drop it once hey-api supports TS 7.

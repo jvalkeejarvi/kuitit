@@ -20,7 +20,7 @@ internal static class DatabaseSetup
 }
 
 /// <summary>Migrates on startup (single instance). A hosted service rather than code before app.Run, so tools
-/// that build the host without running it (OpenAPI generation, DevSeed) don't touch the database. StartingAsync runs
+/// that build the host without running it (DevSeed) don't touch the database. StartingAsync runs
 /// before the server starts listening. A failed backup stops startup before anything is migrated.</summary>
 internal sealed class MigrationService(
     IServiceScopeFactory scopeFactory,

@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <UserSecretsId>kuitit-api</UserSecretsId>
-    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../web</OpenApiDocumentsDirectory>
-    <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,7 +9,6 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" PrivateAssets="all" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
@@ -28,8 +25,6 @@
          RuntimeIdentifiers set to the same on publish, and KEEP_VERSIONS x3 in release.yml (image index). -->
     <RuntimeIdentifier Condition="'$(_IsPublishing)' == 'true' and '$(RuntimeIdentifier)' == ''">linux-x64</RuntimeIdentifier>
     <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
-    <!-- Committed web/openapi.json is the contract; publishing doesn't regenerate it. -->
-    <OpenApiGenerateDocuments Condition="'$(_IsPublishing)' == 'true'">false</OpenApiGenerateDocuments>
   </PropertyGroup>
 
   <ItemGroup Label="Container">

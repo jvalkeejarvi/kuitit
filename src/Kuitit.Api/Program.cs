@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text.Json.Serialization;
 using Kuitit.Api;
 using Kuitit.Api.Auth;
@@ -12,21 +11,6 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Build-time OpenAPI generation (Microsoft.Extensions.ApiDescription.Server) starts the host, so give it
-// throwaway settings and keep it away from real data.
-var isGeneratingOpenApi = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
-if (isGeneratingOpenApi)
-{
-    builder.Configuration.AddInMemoryCollection(
-        new Dictionary<string, string?>
-        {
-            ["DATA_DIR"] = Path.Combine(Path.GetTempPath(), "kuitit-openapi"),
-            ["Auth:Authority"] = "https://openapi.invalid",
-            ["Auth:ClientId"] = "openapi",
-        }
-    );
-}
 
 // Multipart overhead on top of the file itself.
 const long maxRequestBytes = ReceiptRules.MaxUploadBytes + (1024 * 1024);
@@ -46,10 +30,7 @@ builder.AddAppTelemetry();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAppAuth(builder.Configuration);
 builder.Services.AddAppDatabase(builder.Configuration);
-if (!isGeneratingOpenApi)
-{
-    builder.Services.AddHostedService<TrashPurger>();
-}
+builder.Services.AddHostedService<TrashPurger>();
 builder.Services.AddSingleton<IFileStore>(sp => new LocalFileStore(
     Path.Combine(DataDir.Get(sp.GetRequiredService<IConfiguration>()), "files")
 ));
@@ -61,6 +42,7 @@ builder
 // Strict numbers so the OpenAPI schema says integer, not integer|string.
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
 builder.Services.AddProblemDetails();
+
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 
@@ -83,7 +65,12 @@ app.UseStaticFiles(spaFiles);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    // Read by `bun run client` to regenerate the TS client.
+    app.MapOpenApi();
+}
+
 app.MapHealthChecks("/healthz");
 app.MapAuth();
 app.MapApi();

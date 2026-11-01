@@ -2,7 +2,6 @@ node_modules
 dist
 coverage
 bun.lock
-openapi.json
 src/api/client
 src/routeTree.gen.ts
 *.html
