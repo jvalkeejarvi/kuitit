@@ -18,17 +18,17 @@ public sealed record ReceiptDto(
 {
     public static ReceiptDto From(Receipt r) =>
         new(
-            r.Id,
-            r.Name,
-            r.Store,
-            r.Description,
-            r.PurchasedOn,
-            r.WarrantyMonths,
-            r.ExpiresOn,
-            [.. r.Files.Where(f => f.DeletedAt == null).OrderBy(f => f.Position).Select(ReceiptFileDto.From)],
-            r.CreatedAt,
-            r.ArchivedAt,
-            r.DeletedAt
+            Id: r.Id,
+            Name: r.Name,
+            Store: r.Store,
+            Description: r.Description,
+            PurchasedOn: r.PurchasedOn,
+            WarrantyMonths: r.WarrantyMonths,
+            ExpiresOn: r.ExpiresOn,
+            Files: [.. r.Files.Where(f => f.DeletedAt == null).OrderBy(f => f.Position).Select(ReceiptFileDto.From)],
+            CreatedAt: r.CreatedAt,
+            ArchivedAt: r.ArchivedAt,
+            DeletedAt: r.DeletedAt
         );
 }
 
