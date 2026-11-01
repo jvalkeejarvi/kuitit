@@ -27,6 +27,7 @@
     "name": "Nimi",
     "purchasedOn": "Ostettu",
     "expiresOn": "Takuu päättyy",
+    "noWarranty": "Ei takuuta",
     "file": "Tiedosto",
     "actions": "Toiminnot",
     "archive": "Arkistoi",
@@ -42,6 +43,7 @@
   "detail": {
     "purchasedOn": "Ostettu",
     "warranty": "Takuu",
+    "noWarranty": "Ei takuuta",
     "expiresOn": "Takuu päättyy",
     "description": "Kuvaus",
     "added": "Lisätty",
@@ -93,6 +95,7 @@
     "unit": "Yksikkö",
     "months": "kuukautta",
     "years": "vuotta",
+    "noWarranty": "Ei takuuta",
     "expiresPreview": "Takuu päättyy {{date}}",
     "description": "Kuvaus",
     "descriptionPlaceholder": "Malli, sarjanumero, muistiinpanot...",

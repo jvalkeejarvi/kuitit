@@ -68,7 +68,9 @@ export function ReceiptForm({
         .string()
         .min(1, t('form.errors.purchasedOnRequired'))
         .refine(d => d <= today(), t('form.errors.purchasedOnFuture')),
-      warrantyAmount: z.number(),
+      noWarranty: z.boolean(),
+      // NaN while the box is empty; the range check below reports it unless there's no warranty.
+      warrantyAmount: z.number().or(z.nan()),
       warrantyUnit: z.enum(['months', 'years']),
       files: z
         .array(z.instanceof(File))
@@ -81,6 +83,7 @@ export function ReceiptForm({
     })
     .refine(
       v => {
+        if (v.noWarranty) return true;
         const months = toMonths(v.warrantyAmount, v.warrantyUnit);
         return Number.isInteger(months) && months >= MIN_WARRANTY_MONTHS && months <= MAX_WARRANTY_MONTHS;
       },
@@ -96,26 +99,30 @@ export function ReceiptForm({
       store: receipt?.store ?? '',
       description: receipt?.description ?? '',
       purchasedOn: receipt?.purchasedOn ?? today(),
+      noWarranty: receipt !== undefined && receipt.warrantyMonths === null,
       ...fromMonths(receipt?.warrantyMonths ?? 24),
       files: [] as File[],
     },
     validators: { onSubmit: schema },
     onSubmit: async ({ value }) => {
-      const details = {
-        name: value.name.trim(),
-        purchasedOn: value.purchasedOn,
-        warrantyMonths: toMonths(value.warrantyAmount, value.warrantyUnit),
-      };
+      const details = { name: value.name.trim(), purchasedOn: value.purchasedOn };
+      const warrantyMonths = value.noWarranty ? null : toMonths(value.warrantyAmount, value.warrantyUnit);
       let saved: ReceiptDto;
       if (editing) {
         saved = await update.mutateAsync({
           path: { id: receipt.id },
-          body: { ...details, store: value.store.trim() || null, description: value.description.trim() || null },
+          body: {
+            ...details,
+            warrantyMonths,
+            store: value.store.trim() || null,
+            description: value.description.trim() || null,
+          },
         });
       } else {
         saved = await create.mutateAsync({
           body: {
             ...details,
+            warrantyMonths: warrantyMonths ?? undefined,
             store: value.store.trim() || undefined,
             description: value.description.trim() || undefined,
             files: value.files,
@@ -188,43 +195,62 @@ export function ReceiptForm({
           )}
         </form.Field>
 
-        <form.Field name="warrantyAmount">
-          {field => (
-            <Field label={t('form.warranty')} id={field.name} errors={field.state.meta.errors}>
-              <div className="flex gap-2">
-                <input
-                  id={field.name}
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  className={inputClass}
-                  value={Number.isNaN(field.state.value) ? '' : field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={e => field.handleChange(e.target.valueAsNumber)}
-                />
-                <form.Field name="warrantyUnit">
-                  {unit => (
-                    <select
-                      aria-label={t('form.unit')}
-                      className={inputClass}
-                      value={unit.state.value}
-                      onChange={e => unit.handleChange(e.target.value as Unit)}
-                    >
-                      <option value="months">{t('form.months')}</option>
-                      <option value="years">{t('form.years')}</option>
-                    </select>
-                  )}
-                </form.Field>
-              </div>
-            </Field>
+        <form.Subscribe selector={s => s.values.noWarranty}>
+          {noWarranty => (
+            <form.Field name="warrantyAmount">
+              {field => (
+                <Field label={t('form.warranty')} id={field.name} errors={noWarranty ? [] : field.state.meta.errors}>
+                  <div className="flex gap-2">
+                    <input
+                      id={field.name}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      disabled={noWarranty}
+                      className={`${inputClass} disabled:opacity-50`}
+                      value={Number.isNaN(field.state.value) ? '' : field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={e => field.handleChange(e.target.valueAsNumber)}
+                    />
+                    <form.Field name="warrantyUnit">
+                      {unit => (
+                        <select
+                          aria-label={t('form.unit')}
+                          disabled={noWarranty}
+                          className={`${inputClass} disabled:opacity-50`}
+                          value={unit.state.value}
+                          onChange={e => unit.handleChange(e.target.value as Unit)}
+                        >
+                          <option value="months">{t('form.months')}</option>
+                          <option value="years">{t('form.years')}</option>
+                        </select>
+                      )}
+                    </form.Field>
+                  </div>
+                  <form.Field name="noWarranty">
+                    {check => (
+                      <label className="mt-2 flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="size-4 accent-brand"
+                          checked={check.state.value}
+                          onChange={e => check.handleChange(e.target.checked)}
+                        />
+                        {t('form.noWarranty')}
+                      </label>
+                    )}
+                  </form.Field>
+                </Field>
+              )}
+            </form.Field>
           )}
-        </form.Field>
+        </form.Subscribe>
       </div>
 
       <form.Subscribe selector={s => s.values}>
         {v => {
           const months = toMonths(v.warrantyAmount, v.warrantyUnit);
-          if (!v.purchasedOn || !Number.isInteger(months) || months < MIN_WARRANTY_MONTHS) return null;
+          if (v.noWarranty || !v.purchasedOn || !Number.isInteger(months) || months < MIN_WARRANTY_MONTHS) return null;
           const date = formatDate(addMonths(v.purchasedOn, months), i18n.language);
           return <p className="text-sm text-slate-600 dark:text-slate-400">{t('form.expiresPreview', { date })}</p>;
         }}

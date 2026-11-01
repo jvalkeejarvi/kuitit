@@ -8,8 +8,8 @@ public sealed record ReceiptDto(
     string? Store,
     string? Description,
     DateOnly PurchasedOn,
-    int WarrantyMonths,
-    DateOnly ExpiresOn,
+    int? WarrantyMonths,
+    DateOnly? ExpiresOn,
     ReceiptFileDto[] Files,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ArchivedAt,
@@ -43,7 +43,7 @@ public sealed record UpdateReceiptRequest(
     string? Store,
     string? Description,
     DateOnly PurchasedOn,
-    int WarrantyMonths
+    int? WarrantyMonths
 );
 
 public sealed record MeDto(string Email, string? Name);

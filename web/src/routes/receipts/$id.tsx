@@ -93,13 +93,17 @@ function ReceiptDetails({ receipt }: { receipt: ReceiptDto }) {
 
             <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
               <Detail label={t('detail.purchasedOn')}>{formatDate(receipt.purchasedOn, lang)}</Detail>
-              <Detail label={t('detail.warranty')}>{warrantyLength(receipt.warrantyMonths, t)}</Detail>
-              <Detail label={t('detail.expiresOn')}>
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  {formatDate(receipt.expiresOn, lang)}
-                  <StatusBadge expiresOn={receipt.expiresOn} />
-                </span>
+              <Detail label={t('detail.warranty')}>
+                {receipt.warrantyMonths === null ? t('detail.noWarranty') : warrantyLength(receipt.warrantyMonths, t)}
               </Detail>
+              {receipt.expiresOn !== null && (
+                <Detail label={t('detail.expiresOn')}>
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    {formatDate(receipt.expiresOn, lang)}
+                    <StatusBadge expiresOn={receipt.expiresOn} />
+                  </span>
+                </Detail>
+              )}
               {receipt.description && (
                 <Detail label={t('detail.description')}>
                   <span className="whitespace-pre-wrap">

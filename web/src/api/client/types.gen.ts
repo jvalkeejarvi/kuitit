@@ -30,8 +30,8 @@ export type ReceiptDto = {
     store: null | string;
     description: null | string;
     purchasedOn: string;
-    warrantyMonths: number;
-    expiresOn: string;
+    warrantyMonths: null | number;
+    expiresOn: null | string;
     files: Array<ReceiptFileDto>;
     createdAt: string;
     archivedAt: null | string;
@@ -53,7 +53,7 @@ export type UpdateReceiptRequest = {
     store: null | string;
     description: null | string;
     purchasedOn: string;
-    warrantyMonths: number;
+    warrantyMonths: null | number;
 };
 
 export type GetMeData = {
@@ -96,9 +96,9 @@ export type CreateReceiptData = {
     } & {
         purchasedOn: string;
     } & {
-        warrantyMonths: number;
-    } & {
         files: IFormFileCollection;
+    } & {
+        warrantyMonths?: number;
     } & {
         store?: string;
     } & {

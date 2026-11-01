@@ -69,7 +69,6 @@
                 "required": [
                   "name",
                   "purchasedOn",
-                  "warrantyMonths",
                   "files"
                 ],
                 "type": "object",
@@ -94,17 +93,17 @@
                   {
                     "type": "object",
                     "properties": {
-                      "warrantyMonths": {
-                        "type": "integer",
-                        "format": "int32"
+                      "files": {
+                        "$ref": "#/components/schemas/IFormFileCollection"
                       }
                     }
                   },
                   {
                     "type": "object",
                     "properties": {
-                      "files": {
-                        "$ref": "#/components/schemas/IFormFileCollection"
+                      "warrantyMonths": {
+                        "type": "integer",
+                        "format": "int32"
                       }
                     }
                   },
@@ -726,11 +725,17 @@
             "format": "date"
           },
           "warrantyMonths": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           },
           "expiresOn": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "date"
           },
           "files": {
@@ -814,7 +819,10 @@
             "format": "date"
           },
           "warrantyMonths": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           }
         },

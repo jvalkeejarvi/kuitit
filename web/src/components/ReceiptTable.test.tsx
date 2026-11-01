@@ -16,13 +16,13 @@ vi.mock('@/api/client/sdk.gen', async importOriginal => ({
   unarchiveReceipt: vi.fn(),
 }));
 
-const receipt = (name: string, purchasedOn: string, expiresOn: string): ReceiptDto => ({
+const receipt = (name: string, purchasedOn: string, expiresOn: string | null): ReceiptDto => ({
   id: name,
   name,
   store: null,
   description: null,
   purchasedOn,
-  warrantyMonths: 24,
+  warrantyMonths: expiresOn === null ? null : 24,
   expiresOn,
   files: [{ id: `${name}-file`, fileName: 'r.pdf', contentType: 'application/pdf', sizeBytes: 1 }],
   createdAt: '2026-01-01T00:00:00Z',
@@ -34,6 +34,7 @@ const receipts = [
   receipt('Washer', '2024-03-01', '2026-03-01'),
   receipt('älypuhelin', '2026-01-10', '2028-01-10'),
   receipt('Bike', '2025-05-05', '2027-05-05'),
+  receipt('Kahvinkeitin', '2025-10-01', null),
 ];
 
 function Harness() {
@@ -72,24 +73,33 @@ describe('ReceiptTable', () => {
 
   it('sorts by expiry by default and by clicked column, toggling direction', async () => {
     await renderTable();
-    expect(names()).toEqual(['Washer', 'Bike', 'älypuhelin']);
+    expect(names()).toEqual(['Washer', 'Bike', 'älypuhelin', 'Kahvinkeitin']);
 
     // Finnish collation puts ä after z.
     await userEvent.click(screen.getByRole('button', { name: /Nimi/ }));
-    expect(names()).toEqual(['Bike', 'Washer', 'älypuhelin']);
+    expect(names()).toEqual(['Bike', 'Kahvinkeitin', 'Washer', 'älypuhelin']);
 
     await userEvent.click(screen.getByRole('button', { name: /Nimi/ }));
-    expect(names()).toEqual(['älypuhelin', 'Washer', 'Bike']);
+    expect(names()).toEqual(['älypuhelin', 'Washer', 'Kahvinkeitin', 'Bike']);
 
     await userEvent.click(screen.getByRole('button', { name: /Nimi/ }));
-    expect(names()).toEqual(['Bike', 'Washer', 'älypuhelin']);
+    expect(names()).toEqual(['Bike', 'Kahvinkeitin', 'Washer', 'älypuhelin']);
+  });
+
+  it('keeps receipts without a warranty last in both expiry directions', async () => {
+    await renderTable();
+    const row = screen.getByRole('row', { name: /Kahvinkeitin/ });
+    expect(within(row).getByText('Ei takuuta')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /^Takuu päättyy/ }));
+    expect(names()).toEqual(['älypuhelin', 'Bike', 'Washer', 'Kahvinkeitin']);
   });
 
   it('sorts by purchase date', async () => {
     await renderTable();
 
     await userEvent.click(screen.getByRole('button', { name: /^Ostettu/ }));
-    expect(names()).toEqual(['Washer', 'Bike', 'älypuhelin']);
+    expect(names()).toEqual(['Washer', 'Bike', 'Kahvinkeitin', 'älypuhelin']);
   });
 
   it('asks before archiving and archives only on confirm', async () => {

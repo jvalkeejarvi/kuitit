@@ -35,7 +35,7 @@ namespace Kuitit.Api.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("ExpiresOn")
+                    b.Property<DateOnly?>("ExpiresOn")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -65,7 +65,7 @@ namespace Kuitit.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("WarrantyMonths")
+                    b.Property<int?>("WarrantyMonths")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

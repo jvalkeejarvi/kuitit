@@ -13,7 +13,7 @@ internal static class SampleReceipts
         string? Store,
         string? Description,
         DateOnly PurchasedOn,
-        int WarrantyMonths,
+        int? WarrantyMonths,
         bool Image = false,
         bool Archived = false,
         bool ExtraPdf = false
@@ -109,6 +109,13 @@ internal static class SampleReceipts
             new("Juoksukello", "Intersport", "Garmin Forerunner 265", today.AddMonths(-9), 24, Image: true),
             new("Lastenvaunut", "Babyshop", null, today.AddMonths(-21), 24),
             new("Kaiutin", "Verkkokauppa.com", "Sonos Era 100", today.AddMonths(-1).AddDays(-12), 24),
+            new(
+                "Polkupyörän huolto",
+                "Fillarikellari",
+                "Vaihteiden säätö ja ketjujen vaihto",
+                today.AddMonths(-2),
+                null
+            ),
         ];
 
         foreach (var sample in samples)

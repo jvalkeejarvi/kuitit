@@ -79,6 +79,18 @@ public sealed class ReceiptApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Create_without_warranty_has_no_expiry()
+    {
+        var response = await _alice.PostAsync("/api/receipts", TestFiles.Form(warrantyMonths: null), Ct);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created, await response.Content.ReadAsStringAsync(Ct));
+        var receipt = (await response.Content.ReadFromJsonAsync<ReceiptDto>(Ct))!;
+        receipt.WarrantyMonths.Should().BeNull();
+        receipt.ExpiresOn.Should().BeNull();
+        (await GetAsync(_alice, receipt.Id)).Should().BeEquivalentTo(receipt);
+    }
+
+    [Fact]
     public async Task Create_trims_store_and_description_and_get_returns_them()
     {
         var response = await _alice.PostAsync(
@@ -124,14 +136,15 @@ public sealed class ReceiptApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task List_is_sorted_by_expiry()
+    public async Task List_is_sorted_by_expiry_with_no_warranty_last()
     {
+        await _alice.PostAsync("/api/receipts", TestFiles.Form(name: "None", warrantyMonths: null), Ct);
         await _alice.PostAsync("/api/receipts", TestFiles.Form(name: "Later", warrantyMonths: "36"), Ct);
         await _alice.PostAsync("/api/receipts", TestFiles.Form(name: "Sooner", warrantyMonths: "12"), Ct);
 
         var receipts = await ListAsync(_alice);
 
-        receipts.Select(r => r.Name).Should().Equal("Sooner", "Later");
+        receipts.Select(r => r.Name).Should().Equal("Sooner", "Later", "None");
     }
 
     [Fact]
@@ -381,6 +394,29 @@ public sealed class ReceiptApiTests : IAsyncLifetime
         updated.WarrantyMonths.Should().Be(6);
         updated.ExpiresOn.Should().Be(new DateOnly(2026, 2, 28));
         updated.Files.Should().BeEquivalentTo(receipt.Files);
+    }
+
+    [Fact]
+    public async Task Update_can_remove_and_add_back_the_warranty()
+    {
+        var receipt = await CreateAsync(_alice);
+
+        var removed = await _alice.PutAsJsonAsync(
+            $"/api/receipts/{receipt.Id}",
+            new UpdateReceiptRequest("Laptop", null, null, new DateOnly(2025, 8, 31), null),
+            Ct
+        );
+        removed.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await GetAsync(_alice, receipt.Id))
+            .Should()
+            .Match<ReceiptDto>(r => r.WarrantyMonths == null && r.ExpiresOn == null);
+
+        await _alice.PutAsJsonAsync(
+            $"/api/receipts/{receipt.Id}",
+            new UpdateReceiptRequest("Laptop", null, null, new DateOnly(2025, 8, 31), 6),
+            Ct
+        );
+        (await GetAsync(_alice, receipt.Id)).ExpiresOn.Should().Be(new DateOnly(2026, 2, 28));
     }
 
     [Fact]

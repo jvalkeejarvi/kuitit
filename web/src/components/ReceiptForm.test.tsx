@@ -81,6 +81,26 @@ describe('ReceiptForm', () => {
     });
   });
 
+  it('submits without a warranty when No warranty is checked', async () => {
+    vi.mocked(createReceipt).mockResolvedValue({ data: {} } as never);
+    const onDone = renderForm();
+
+    await userEvent.type(screen.getByLabelText('Name'), 'Bike service');
+    const amount = screen.getByLabelText('Warranty length');
+    await userEvent.clear(amount);
+    await userEvent.click(screen.getByRole('checkbox', { name: 'No warranty' }));
+    expect(amount).toBeDisabled();
+    expect(screen.queryByText(/Warranty until/)).not.toBeInTheDocument();
+    await userEvent.upload(
+      screen.getByLabelText('Choose files'),
+      new File(['x'], 'r.pdf', { type: 'application/pdf' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(vi.mocked(createReceipt).mock.calls[0]![0].body.warrantyMonths).toBeUndefined();
+  });
+
   it('sends trimmed store and description', async () => {
     vi.mocked(createReceipt).mockResolvedValue({ data: {} } as never);
     const onDone = renderForm();
@@ -179,6 +199,34 @@ describe('ReceiptForm', () => {
       path: { id: 'r1' },
       body: { name: 'TV', store: null, description: 'OLED', purchasedOn: '2025-12-30', warrantyMonths: 60 },
     });
+  });
+
+  it('edits a receipt without a warranty: checked, and unchecking adds one back', async () => {
+    const receipt = {
+      id: 'r1',
+      name: 'Bike service',
+      store: null,
+      description: null,
+      purchasedOn: '2026-05-01',
+      warrantyMonths: null,
+      expiresOn: null,
+    } as ReceiptDto;
+    vi.mocked(updateReceipt)
+      .mockReset()
+      .mockResolvedValue({ data: receipt } as never);
+    const onDone = renderForm(vi.fn(), receipt);
+
+    const noWarranty = screen.getByRole('checkbox', { name: 'No warranty' });
+    expect(noWarranty).toBeChecked();
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalledOnce());
+    expect(vi.mocked(updateReceipt).mock.calls[0]![0].body.warrantyMonths).toBeNull();
+
+    await userEvent.click(noWarranty);
+    expect(screen.getByText('Warranty until May 1, 2028')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(updateReceipt).mock.calls[1]![0].body.warrantyMonths).toBe(24);
   });
 
   it('hands the created receipt to onSaved instead of closing', async () => {

@@ -18,10 +18,11 @@ public sealed class Receipt
 
     public DateOnly PurchasedOn { get; set; }
 
-    public int WarrantyMonths { get; set; }
+    /// <summary>Null: the purchase has no warranty.</summary>
+    public int? WarrantyMonths { get; set; }
 
     /// <summary>Derived from PurchasedOn + WarrantyMonths; stored so it can be sorted and filtered on.</summary>
-    public DateOnly ExpiresOn { get; private set; }
+    public DateOnly? ExpiresOn { get; private set; }
 
     public DateTimeOffset CreatedAt { get; init; }
 
@@ -33,10 +34,10 @@ public sealed class Receipt
     /// <summary>At least one; see <see cref="ReceiptFile.Position"/> for the order.</summary>
     public List<ReceiptFile> Files { get; init; } = [];
 
-    public void SetWarranty(DateOnly purchasedOn, int warrantyMonths)
+    public void SetWarranty(DateOnly purchasedOn, int? warrantyMonths)
     {
         PurchasedOn = purchasedOn;
         WarrantyMonths = warrantyMonths;
-        ExpiresOn = purchasedOn.AddMonths(warrantyMonths);
+        ExpiresOn = warrantyMonths is { } months ? purchasedOn.AddMonths(months) : null;
     }
 }

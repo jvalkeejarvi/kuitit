@@ -66,15 +66,24 @@ export function ReceiptTable({
         sortingFn: 'basic',
         cell: c => formatDate(c.getValue(), i18n.language),
       }),
-      column.accessor('expiresOn', {
+      // Undefined rather than null, so receipts without a warranty sort last in both directions.
+      column.accessor(r => r.expiresOn ?? undefined, {
+        id: 'expiresOn',
         header: () => t('receipts.expiresOn'),
         sortingFn: 'basic',
-        cell: c => (
-          <span className="flex flex-col items-start gap-1">
-            {formatDate(c.getValue(), i18n.language)}
-            <StatusBadge expiresOn={c.getValue()} />
-          </span>
-        ),
+        sortUndefined: 'last',
+        cell: c => {
+          const expiresOn = c.getValue();
+          if (expiresOn === undefined) {
+            return <span className="text-slate-500 dark:text-slate-400">{t('receipts.noWarranty')}</span>;
+          }
+          return (
+            <span className="flex flex-col items-start gap-1">
+              {formatDate(expiresOn, i18n.language)}
+              <StatusBadge expiresOn={expiresOn} />
+            </span>
+          );
+        },
       }),
       column.display({
         id: 'actions',

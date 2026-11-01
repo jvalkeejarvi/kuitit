@@ -27,6 +27,7 @@
     "name": "Name",
     "purchasedOn": "Purchased",
     "expiresOn": "Warranty until",
+    "noWarranty": "No warranty",
     "file": "File",
     "actions": "Actions",
     "archive": "Archive",
@@ -42,6 +43,7 @@
   "detail": {
     "purchasedOn": "Purchased",
     "warranty": "Warranty",
+    "noWarranty": "None",
     "expiresOn": "Warranty until",
     "description": "Description",
     "added": "Added",
@@ -93,6 +95,7 @@
     "unit": "Unit",
     "months": "months",
     "years": "years",
+    "noWarranty": "No warranty",
     "expiresPreview": "Warranty until {{date}}",
     "description": "Description",
     "descriptionPlaceholder": "Model, serial number, notes...",

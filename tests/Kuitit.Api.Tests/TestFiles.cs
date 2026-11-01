@@ -13,7 +13,7 @@ internal static class TestFiles
     public static MultipartFormDataContent Form(
         string name = "Laptop",
         string purchasedOn = "2026-01-10",
-        string warrantyMonths = "24",
+        string? warrantyMonths = "24",
         byte[]? file = null,
         string fileName = "receipt.pdf",
         string declaredType = "application/pdf",
@@ -26,8 +26,13 @@ internal static class TestFiles
         {
             { new StringContent(name), "name" },
             { new StringContent(purchasedOn), "purchasedOn" },
-            { new StringContent(warrantyMonths), "warrantyMonths" },
         };
+        // Left out: no warranty.
+        if (warrantyMonths is not null)
+        {
+            form.Add(new StringContent(warrantyMonths), "warrantyMonths");
+        }
+
         for (var i = 0; i < fileCount; i++)
         {
             form.Add(File(file ?? Pdf, declaredType), "files", fileName);

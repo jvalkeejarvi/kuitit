@@ -52,7 +52,9 @@ internal static class ReceiptEndpoints
         var rows = await db
             .Receipts.Include(r => r.Files)
             .Where(r => archived ? r.ArchivedAt != null : r.ArchivedAt == null)
-            .OrderBy(r => r.ExpiresOn)
+            // Receipts without a warranty last.
+            .OrderBy(r => r.ExpiresOn == null)
+            .ThenBy(r => r.ExpiresOn)
             .ThenBy(r => r.Name)
             .AsNoTracking()
             .ToListAsync(ct);
@@ -74,8 +76,8 @@ internal static class ReceiptEndpoints
     private static async Task<Results<Created<ReceiptDto>, ValidationProblem>> CreateAsync(
         [FromForm] string name,
         [FromForm] DateOnly purchasedOn,
-        [FromForm] int warrantyMonths,
         IFormFileCollection files,
+        [FromForm] int? warrantyMonths,
         [FromForm] string? store,
         [FromForm] string? description,
         AppDbContext db,
@@ -368,7 +370,7 @@ internal static class ReceiptEndpoints
         string? store,
         string? description,
         DateOnly purchasedOn,
-        int warrantyMonths,
+        int? warrantyMonths,
         TimeProvider time,
         Dictionary<string, string[]> errors
     )
