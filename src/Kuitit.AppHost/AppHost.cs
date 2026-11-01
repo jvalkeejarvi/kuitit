@@ -26,7 +26,8 @@ var api = builder
 builder
     .AddProject<Projects.Kuitit_DevSeed>("seed")
     .WithEnvironment("DATA_DIR", dataDir)
-    .WithEnvironment("Auth__Authority", authority)
+    // The mock IdP's issuer is the API's authority; seeded receipts need it to belong to `dev`.
+    .WithEnvironment("SEED_ISSUER", authority)
     .WaitFor(api);
 
 builder

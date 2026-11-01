@@ -9,9 +9,10 @@ using Microsoft.Extensions.Hosting;
 
 // Local sample data for the Aspire AppHost. Sign in to the mock IdP as `dev` to see it.
 var builder = Host.CreateApplicationBuilder(args);
-var authority =
-    builder.Configuration["Auth:Authority"] ?? throw new InvalidOperationException("Auth:Authority is not set.");
-var user = new UserIdentity(authority, SampleReceipts.Subject, "dev@example.com", "Dev");
+
+// Issuer of the `dev` user's tokens; receipts are only visible to the matching issuer + subject.
+var issuer = builder.Configuration["SEED_ISSUER"] ?? throw new InvalidOperationException("SEED_ISSUER is not set.");
+var user = new UserIdentity(issuer, SampleReceipts.Subject, "dev@example.com", "Dev");
 
 builder.Services.AddSingleton<ICurrentUser>(new SeedUser(user));
 

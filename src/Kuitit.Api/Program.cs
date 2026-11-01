@@ -9,6 +9,7 @@ using Kuitit.Api.Telemetry;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,7 +61,8 @@ app.Use(
     }
 );
 app.UseDefaultFiles();
-var spaFiles = SpaFiles.Create(SpaFiles.ContentSecurityPolicy(app.Configuration["Auth:Authority"]!));
+var authOptions = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
+var spaFiles = SpaFiles.Create(SpaFiles.ContentSecurityPolicy(authOptions.Authority));
 app.UseStaticFiles(spaFiles);
 app.UseAuthentication();
 app.UseAuthorization();
