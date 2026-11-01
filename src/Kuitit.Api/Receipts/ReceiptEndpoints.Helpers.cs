@@ -1,4 +1,3 @@
-using Kuitit.Api.Data;
 using Kuitit.Api.Files;
 
 namespace Kuitit.Api.Receipts;
@@ -14,7 +13,7 @@ internal static partial class ReceiptEndpoints
         string? description,
         DateOnly purchasedOn,
         int? warrantyMonths,
-        TimeProvider time,
+        DateTimeOffset now,
         Dictionary<string, string[]> errors
     )
     {
@@ -41,7 +40,7 @@ internal static partial class ReceiptEndpoints
         }
 
         // A day of slack: the client's local date can be ahead of UTC.
-        if (purchasedOn > DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime).AddDays(1))
+        if (purchasedOn > DateOnly.FromDateTime(now.UtcDateTime).AddDays(1))
         {
             errors["purchasedOn"] = ["Purchase date can't be in the future."];
         }
@@ -57,10 +56,8 @@ internal static partial class ReceiptEndpoints
         return new Details(name, store, description);
     }
 
-    private sealed record Upload(IFormFile File, DetectedFileType Type);
-
     /// <summary>Checks count, size and content (magic bytes) of every file; adds to <paramref name="errors"/>.</summary>
-    private static async Task<List<Upload>> ValidateFilesAsync(
+    private static async Task<List<ReceiptUpload>> ValidateFilesAsync(
         IFormFileCollection files,
         int existingCount,
         Dictionary<string, string[]> errors,
@@ -79,7 +76,7 @@ internal static partial class ReceiptEndpoints
             return [];
         }
 
-        var uploads = new List<Upload>();
+        var uploads = new List<ReceiptUpload>();
         var problems = new List<string>();
         foreach (var file in files)
         {
@@ -93,7 +90,7 @@ internal static partial class ReceiptEndpoints
             }
             else if (await DetectAsync(file, ct) is { } type)
             {
-                uploads.Add(new Upload(file, type));
+                uploads.Add(new ReceiptUpload(file, type));
             }
             else
             {
@@ -109,56 +106,6 @@ internal static partial class ReceiptEndpoints
         return uploads;
     }
 
-    /// <summary>Writes the files, then the rows; files already written are removed if saving the rows fails.</summary>
-    private static async Task SaveFilesAsync(
-        Receipt receipt,
-        List<Upload> uploads,
-        DateTimeOffset now,
-        AppDbContext db,
-        IFileStore fileStore,
-        CancellationToken ct
-    )
-    {
-        var written = new List<string>();
-        var position = receipt.Files.Count == 0 ? 0 : receipt.Files.Max(f => f.Position) + 1;
-        try
-        {
-            foreach (var upload in uploads)
-            {
-                var id = Guid.CreateVersion7();
-                var file = new ReceiptFile
-                {
-                    Id = id,
-                    ReceiptId = receipt.Id,
-                    FileName = SafeFileName(upload.File.FileName, upload.Type.Extension),
-                    ContentType = upload.Type.ContentType,
-                    StorageKey = $"{id:N}{upload.Type.Extension}",
-                    SizeBytes = upload.File.Length,
-                    Position = position++,
-                    CreatedAt = now,
-                };
-                await using (var stream = upload.File.OpenReadStream())
-                {
-                    await fileStore.SaveAsync(file.StorageKey, stream, ct);
-                }
-
-                written.Add(file.StorageKey);
-                receipt.Files.Add(file);
-            }
-
-            await db.SaveChangesAsync(ct);
-        }
-        catch
-        {
-            foreach (var key in written)
-            {
-                await fileStore.DeleteAsync(key, CancellationToken.None);
-            }
-
-            throw;
-        }
-    }
-
     private static async Task<DetectedFileType?> DetectAsync(IFormFile file, CancellationToken ct)
     {
         var header = new byte[FileSignature.HeaderLength];
@@ -168,17 +115,4 @@ internal static partial class ReceiptEndpoints
     }
 
     private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    /// <summary>Display name only; never used as a path.</summary>
-    private static string SafeFileName(string fileName, string extension)
-    {
-        var name = Path.GetFileName(fileName.Replace('\\', '/')).Trim();
-        name = new string([.. name.Where(c => !char.IsControl(c))]);
-        if (name.Length == 0)
-        {
-            return "receipt" + extension;
-        }
-
-        return name.Length <= 255 ? name : name[..(255 - extension.Length)] + extension;
-    }
 }

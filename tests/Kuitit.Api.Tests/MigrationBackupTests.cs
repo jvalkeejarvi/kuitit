@@ -36,7 +36,7 @@ public sealed class MigrationBackupTests : IDisposable
         );
 
     private Task<string?> BackupAsync(AppDbContext db) =>
-        MigrationBackup.CreateAsync(db, _time, NullLogger.Instance, Ct);
+        new MigrationBackup(db, _time, NullLogger<MigrationBackup>.Instance).CreateAsync(Ct);
 
     /// <summary>A database at the first migration, with the rest pending.</summary>
     private async Task<string> CreateOutdatedDbAsync(AppDbContext db)

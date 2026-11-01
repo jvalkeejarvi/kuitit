@@ -125,17 +125,14 @@ internal static class AuthSetup
             }
         );
 
-    public static async Task<bool> HasEndSessionEndpointAsync(HttpContext context)
+    public static async Task<bool> HasEndSessionEndpointAsync(OpenIdConnectOptions options, CancellationToken ct)
     {
-        var options = context
-            .RequestServices.GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>()
-            .Get(OpenIdConnectDefaults.AuthenticationScheme);
         if (options.ConfigurationManager is null)
         {
             return false;
         }
 
-        var config = await options.ConfigurationManager.GetConfigurationAsync(context.RequestAborted);
+        var config = await options.ConfigurationManager.GetConfigurationAsync(ct);
         return !string.IsNullOrEmpty(config.EndSessionEndpoint);
     }
 

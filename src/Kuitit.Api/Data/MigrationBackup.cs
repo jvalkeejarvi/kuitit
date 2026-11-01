@@ -7,7 +7,7 @@ namespace Kuitit.Api.Data;
 /// A copy of the SQLite database taken just before pending migrations run, so a bad migration or a rollback to the
 /// previous release can be undone. Kept in `backups/` next to the database, newest <see cref="Keep"/> only.
 /// </summary>
-internal static class MigrationBackup
+internal sealed class MigrationBackup(AppDbContext db, TimeProvider time, ILogger<MigrationBackup> logger)
 {
     public const int Keep = 5;
 
@@ -15,12 +15,7 @@ internal static class MigrationBackup
 
     /// <summary>The backup's path, or null when there is nothing to back up (no pending migrations, or a new
     /// database).</summary>
-    public static async Task<string?> CreateAsync(
-        AppDbContext db,
-        TimeProvider time,
-        ILogger logger,
-        CancellationToken ct
-    )
+    public async Task<string?> CreateAsync(CancellationToken ct)
     {
         var dbPath = new SqliteConnectionStringBuilder(db.Database.GetConnectionString()).DataSource;
         if (!File.Exists(dbPath))

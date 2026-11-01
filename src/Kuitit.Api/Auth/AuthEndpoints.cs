@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Extensions.Options;
 
 namespace Kuitit.Api.Auth;
 
@@ -27,10 +28,14 @@ internal static class AuthEndpoints
         // SameSite=Lax keeps the cookie off cross-site POSTs, so a third party can't log the user out.
         auth.MapPost(
                 "/logout",
-                async (HttpContext http) =>
+                async (HttpContext http, IOptionsMonitor<OpenIdConnectOptions> oidc) =>
                 {
                     var properties = new AuthenticationProperties { RedirectUri = signedOutUrl };
-                    if (http.User.Identity?.IsAuthenticated == true && await AuthSetup.HasEndSessionEndpointAsync(http))
+                    var options = oidc.Get(OpenIdConnectDefaults.AuthenticationScheme);
+                    if (
+                        http.User.Identity?.IsAuthenticated == true
+                        && await AuthSetup.HasEndSessionEndpointAsync(options, http.RequestAborted)
+                    )
                     {
                         return Results.SignOut(
                             properties,

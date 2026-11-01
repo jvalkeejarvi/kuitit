@@ -16,7 +16,7 @@ var user = new UserIdentity(issuer, SampleReceipts.Subject, "dev@example.com", "
 
 builder.Services.AddSingleton<ICurrentUser>(new SeedUser(user));
 
-// MigrationService needs it to resolve, though the host is never started.
+// MigrationBackup needs it to resolve, though the host is never started.
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAppDatabase(builder.Configuration);
 builder.Services.AddSingleton<IFileStore>(sp => new LocalFileStore(

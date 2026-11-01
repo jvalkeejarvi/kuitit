@@ -13,6 +13,7 @@ internal static class DatabaseSetup
                     ?? $"Data Source={Path.Combine(DataDir.Get(configuration), "app.db")}"
             )
         );
+        services.AddScoped<MigrationBackup>();
         services.AddHostedService<MigrationService>();
 
         return services;
@@ -22,17 +23,13 @@ internal static class DatabaseSetup
 /// <summary>Migrates on startup (single instance). A hosted service rather than code before app.Run, so tools
 /// that build the host without running it (DevSeed) don't touch the database. StartingAsync runs
 /// before the server starts listening. A failed backup stops startup before anything is migrated.</summary>
-internal sealed class MigrationService(
-    IServiceScopeFactory scopeFactory,
-    TimeProvider time,
-    ILogger<MigrationService> logger
-) : IHostedLifecycleService
+internal sealed class MigrationService(IServiceScopeFactory scopeFactory) : IHostedLifecycleService
 {
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<MigrationBackup>().CreateAsync(cancellationToken);
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await MigrationBackup.CreateAsync(db, time, logger, cancellationToken);
         await db.Database.MigrateAsync(cancellationToken);
         await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", cancellationToken);
     }

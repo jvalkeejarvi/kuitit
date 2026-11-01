@@ -12,8 +12,7 @@ internal static partial class ReceiptEndpoints
         Guid id,
         IFormFileCollection files,
         AppDbContext db,
-        IFileStore fileStore,
-        TimeProvider time,
+        ReceiptFileWriter fileWriter,
         CancellationToken ct
     )
     {
@@ -30,7 +29,7 @@ internal static partial class ReceiptEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
-        await SaveFilesAsync(receipt, uploads, time.GetUtcNow(), db, fileStore, ct);
+        await fileWriter.SaveAsync(receipt, uploads, ct);
         return TypedResults.Ok(ReceiptDto.From(receipt));
     }
 

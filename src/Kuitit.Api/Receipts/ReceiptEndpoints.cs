@@ -1,6 +1,5 @@
 using Kuitit.Api.Auth;
 using Kuitit.Api.Data;
-using Kuitit.Api.Files;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -68,14 +67,15 @@ internal static partial class ReceiptEndpoints
         [FromForm] string? store,
         [FromForm] string? description,
         AppDbContext db,
-        IFileStore fileStore,
+        ReceiptFileWriter fileWriter,
         ICurrentUser currentUser,
         TimeProvider time,
         CancellationToken ct
     )
     {
+        var now = time.GetUtcNow();
         var errors = new Dictionary<string, string[]>();
-        var details = ValidateDetails(name, store, description, purchasedOn, warrantyMonths, time, errors);
+        var details = ValidateDetails(name, store, description, purchasedOn, warrantyMonths, now, errors);
         var uploads = await ValidateFilesAsync(files, existingCount: 0, errors, ct);
         if (errors.Count > 0)
         {
@@ -83,7 +83,6 @@ internal static partial class ReceiptEndpoints
         }
 
         var user = currentUser.Identity!;
-        var now = time.GetUtcNow();
         var receipt = new Receipt
         {
             Id = Guid.CreateVersion7(),
@@ -98,7 +97,7 @@ internal static partial class ReceiptEndpoints
         receipt.SetWarranty(purchasedOn, warrantyMonths);
         db.Receipts.Add(receipt);
 
-        await SaveFilesAsync(receipt, uploads, now, db, fileStore, ct);
+        await fileWriter.SaveAsync(receipt, uploads, ct);
         return TypedResults.Created($"/api/receipts/{receipt.Id}", ReceiptDto.From(receipt));
     }
 
@@ -138,7 +137,7 @@ internal static partial class ReceiptEndpoints
             request.Description,
             request.PurchasedOn,
             request.WarrantyMonths,
-            time,
+            time.GetUtcNow(),
             errors
         );
         if (errors.Count > 0)
