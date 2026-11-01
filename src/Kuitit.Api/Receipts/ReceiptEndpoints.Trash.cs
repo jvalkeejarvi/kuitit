@@ -1,5 +1,4 @@
 using Kuitit.Api.Data;
-using Kuitit.Api.Files;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,8 +55,7 @@ internal static partial class ReceiptEndpoints
     private static async Task<NoContent> DeletePermanentlyAsync(
         Guid id,
         AppDbContext db,
-        IFileStore fileStore,
-        ILogger<TrashPurger> logger,
+        TrashCleaner trash,
         CancellationToken ct
     )
     {
@@ -67,7 +65,7 @@ internal static partial class ReceiptEndpoints
             .FirstOrDefaultAsync(r => r.Id == id && r.DeletedAt != null, ct);
         if (receipt is not null)
         {
-            await TrashPurger.DeleteAsync([receipt], [], db, fileStore, logger, ct);
+            await trash.DeleteAsync([receipt], [], ct);
         }
 
         return TypedResults.NoContent();

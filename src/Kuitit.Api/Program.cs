@@ -31,6 +31,7 @@ builder.AddAppTelemetry();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAppAuth(builder.Configuration);
 builder.Services.AddAppDatabase(builder.Configuration);
+builder.Services.AddScoped<TrashCleaner>();
 builder.Services.AddHostedService<TrashPurger>();
 builder.Services.AddSingleton<IFileStore>(sp => new LocalFileStore(
     Path.Combine(DataDir.Get(sp.GetRequiredService<IConfiguration>()), "files")

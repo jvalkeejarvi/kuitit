@@ -139,19 +139,15 @@ public sealed class TrashTests : IAsyncLifetime
         await _alice.DeleteAsync($"/api/receipts/{old.Id}", Ct);
         var kept = await CreateAsync(fileCount: 2);
         await _alice.DeleteAsync($"/api/receipts/{kept.Id}/files/{kept.Files[0].Id}", Ct);
-        _factory.Time.Advance(TimeSpan.FromDays(ReceiptRules.TrashDays + 1));
+        _factory.Time.Advance(TimeSpan.FromDays(2));
         var recent = await CreateAsync();
         await _alice.DeleteAsync($"/api/receipts/{recent.Id}", Ct);
+        // Old and the removed file: a day past the limit. Recent: a day short of it.
+        _factory.Time.Advance(TimeSpan.FromDays(ReceiptRules.TrashDays - 1));
 
         await using (var scope = _factory.Services.CreateAsyncScope())
         {
-            var purged = await TrashPurger.PurgeAsync(
-                _factory.Time.GetUtcNow().AddDays(-ReceiptRules.TrashDays),
-                scope.ServiceProvider.GetRequiredService<AppDbContext>(),
-                scope.ServiceProvider.GetRequiredService<IFileStore>(),
-                NullLogger.Instance,
-                Ct
-            );
+            var purged = await scope.ServiceProvider.GetRequiredService<TrashCleaner>().PurgeAsync(Ct);
             purged.Should().Be(2, "the old receipt and the removed file");
         }
 
@@ -173,13 +169,13 @@ public sealed class TrashTests : IAsyncLifetime
         await using var scope = _factory.Services.CreateAsyncScope();
         var real = scope.ServiceProvider.GetRequiredService<IFileStore>();
         var failing = new FailingFileStore(real, failKey: $"{receipt.Files[0].Id:N}.pdf");
-        var purged = await TrashPurger.PurgeAsync(
-            _factory.Time.GetUtcNow().AddDays(-ReceiptRules.TrashDays),
+        var cleaner = new TrashCleaner(
             scope.ServiceProvider.GetRequiredService<AppDbContext>(),
             failing,
-            NullLogger.Instance,
-            Ct
+            _factory.Time,
+            NullLogger<TrashCleaner>.Instance
         );
+        var purged = await cleaner.PurgeAsync(Ct);
 
         purged.Should().Be(1);
         (await ListAsync(_alice, "/api/receipts/trash")).Should().BeEmpty();
