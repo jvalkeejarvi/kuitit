@@ -28,8 +28,16 @@ internal static class TelemetrySetup
                     .AddHttpClientInstrumentation()
             );
 
-        if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+        var endpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+        if (!string.IsNullOrWhiteSpace(endpoint))
         {
+            if (!Uri.TryCreate(endpoint, UriKind.Absolute, out _))
+            {
+                throw new InvalidOperationException(
+                    $"OTEL_EXPORTER_OTLP_ENDPOINT is not an absolute URL: '{endpoint}'."
+                );
+            }
+
             otel.UseOtlpExporter();
         }
 

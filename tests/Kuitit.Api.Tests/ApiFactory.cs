@@ -55,6 +55,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseWebRoot(CreateWebRoot());
         builder.UseSetting("Auth:Authority", Issuer);
         builder.UseSetting("Auth:ClientId", "tests");
+        builder.UseSetting("Auth:ClientSecret", "tests");
+        builder.UseSetting("Auth:AllowedUsers:0", "*");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();

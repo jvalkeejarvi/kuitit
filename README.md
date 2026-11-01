@@ -54,14 +54,17 @@ TypeScript: type checking uses TS 7 (`typescript7` alias). TS 6 (`typescript`) s
 
 ## Configuration
 
+Checked at startup: the app refuses to start when a required setting is missing or invalid.
+
 | Setting | Meaning |
 |---|---|
 | `DATA_DIR` | SQLite DB (`app.db`), uploads (`files/`), DataProtection keys (`keys/`). `/data` in the image. |
-| `Auth__Authority` | OIDC issuer URL |
+| `Auth__Authority` | OIDC issuer URL; HTTPS unless `Auth__RequireHttpsMetadata=false` |
 | `Auth__ClientId` / `Auth__ClientSecret` | OIDC client |
-| `Auth__AllowedUsers__N` | Emails or subjects allowed to sign in, or `*` for anyone the IdP signs in. Empty denies everyone. |
+| `Auth__RequireHttpsMetadata` | Default `true`. `false` only for a local plain-HTTP mock IdP. |
+| `Auth__AllowedUsers__N` | Emails or subjects allowed to sign in, or `*` for anyone the IdP signs in. At least one. |
 | `ConnectionStrings__App` | Optional DB connection string override |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional. Exports traces, metrics and logs over OTLP (set automatically by Aspire in dev). |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional; an absolute URL when set. Exports traces, metrics and logs over OTLP (set automatically by Aspire in dev). |
 
 ### Testing the production image locally
 
@@ -77,7 +80,7 @@ Use `--arch x64` on Intel. Data goes to `./.data/local-image`. Stop Aspire first
 Sample receipts for user `dev` (then restart the container: SQLite can't share its WAL across the Docker VM):
 
 ```sh
-DATA_DIR=.data/local-image Auth__Authority=http://localhost:8090/default dotnet run --project tools/Kuitit.DevSeed
+DATA_DIR=.data/local-image SEED_ISSUER=http://localhost:8090/default dotnet run --project tools/Kuitit.DevSeed
 docker compose -f compose.local.yaml restart kuitit
 ```
 

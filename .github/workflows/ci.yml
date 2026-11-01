@@ -67,6 +67,7 @@ jobs:
           Auth__Authority: https://idp.invalid
           Auth__ClientId: ci
           Auth__ClientSecret: ci
+          Auth__AllowedUsers__0: "*"
         run: |
           (cd publish && dotnet Kuitit.Api.dll) &
           timeout 30 bash -c 'until curl -sf -o /dev/null http://127.0.0.1:5099/healthz; do sleep 0.5; done'

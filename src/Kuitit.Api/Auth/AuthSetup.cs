@@ -16,6 +16,10 @@ internal static class AuthSetup
             .AddOptions<AuthOptions>()
             .Bind(configuration.GetSection(AuthOptions.SectionName))
             .ValidateDataAnnotations()
+            .Validate(
+                o => o.AllowedUsers.Any(a => !string.IsNullOrWhiteSpace(a)),
+                "Auth:AllowedUsers must list at least one email or subject (or *)."
+            )
             .ValidateOnStart();
 
         services.AddHttpContextAccessor();
@@ -51,7 +55,8 @@ internal static class AuthSetup
 
         services
             .AddOptions<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme)
-            .Configure<IOptions<AuthOptions>>((o, auth) => ConfigureOidc(o, auth.Value));
+            .Configure<IOptions<AuthOptions>>((o, auth) => ConfigureOidc(o, auth.Value))
+            .ValidateOnStart();
 
         services.AddAuthorization();
         return services;
