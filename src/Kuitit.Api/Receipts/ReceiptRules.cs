@@ -1,4 +1,4 @@
-namespace Kuitit.Api;
+namespace Kuitit.Api.Receipts;
 
 public static class ReceiptRules
 {

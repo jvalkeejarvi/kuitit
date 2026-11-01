@@ -1,3 +1,5 @@
+using Kuitit.Api.Receipts;
+
 namespace Kuitit.Api.Data;
 
 public sealed class Receipt
