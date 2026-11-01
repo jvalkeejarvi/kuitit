@@ -28,7 +28,6 @@ await using var scope = host.Services.CreateAsyncScope();
 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 var files = scope.ServiceProvider.GetRequiredService<IFileStore>();
 
-await db.Database.MigrateAsync();
 if (await db.Receipts.AnyAsync())
 {
     Console.WriteLine($"'{user.Subject}' already has receipts; nothing to seed.");
