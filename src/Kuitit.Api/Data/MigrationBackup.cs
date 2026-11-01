@@ -22,11 +22,6 @@ internal static class MigrationBackup
         CancellationToken ct
     )
     {
-        if (!db.Database.IsSqlite())
-        {
-            return null;
-        }
-
         var dbPath = new SqliteConnectionStringBuilder(db.Database.GetConnectionString()).DataSource;
         if (!File.Exists(dbPath))
         {

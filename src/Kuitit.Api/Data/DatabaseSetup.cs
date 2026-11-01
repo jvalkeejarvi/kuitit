@@ -10,23 +10,13 @@ internal static class DatabaseSetup
         bool migrateOnStartup
     )
     {
-        var provider = configuration["Database:Provider"] ?? "Sqlite";
-
         // Resolved per context so DATA_DIR is only needed when the app actually runs.
         services.AddDbContext<AppDbContext>(options =>
-        {
-            switch (provider)
-            {
-                case "Sqlite":
-                    options.UseSqlite(
-                        configuration.GetConnectionString("App")
-                            ?? $"Data Source={Path.Combine(DataDir.Get(configuration), "app.db")}"
-                    );
-                    break;
-                default:
-                    throw new InvalidOperationException($"Unsupported Database:Provider '{provider}'.");
-            }
-        });
+            options.UseSqlite(
+                configuration.GetConnectionString("App")
+                    ?? $"Data Source={Path.Combine(DataDir.Get(configuration), "app.db")}"
+            )
+        );
         if (migrateOnStartup)
         {
             services.AddHostedService<MigrationService>();
@@ -51,10 +41,7 @@ internal sealed class MigrationService(
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await MigrationBackup.CreateAsync(db, time, logger, cancellationToken);
         await db.Database.MigrateAsync(cancellationToken);
-        if (db.Database.IsSqlite())
-        {
-            await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", cancellationToken);
-        }
+        await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", cancellationToken);
     }
 
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;

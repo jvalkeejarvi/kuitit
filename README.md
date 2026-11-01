@@ -1,8 +1,7 @@
 # Kuitit
 
 Self-hosted warranty receipts: store a photo or PDF of a receipt with its purchase date and warranty length.
-Runs as a single container on a Synology NAS, signs in with OIDC (Synology SSO Server), and keeps everything
-that would change for a cloud move (DB, files, IdP) behind configuration.
+Runs as a single container on a Synology NAS and signs in with OIDC (Synology SSO Server).
 
 - API: .NET 10 minimal APIs, EF Core + SQLite, OIDC + cookie (BFF; tokens never reach the browser)
 - SPA: React 19, TanStack Router/Query/Form/Table, Tailwind v4, i18next (en, fi), dark mode
