@@ -4,11 +4,7 @@ namespace Kuitit.Api.Data;
 
 internal static class DatabaseSetup
 {
-    public static IServiceCollection AddAppDatabase(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        bool migrateOnStartup
-    )
+    public static IServiceCollection AddAppDatabase(this IServiceCollection services, IConfiguration configuration)
     {
         // Resolved per context so DATA_DIR is only needed when the app actually runs.
         services.AddDbContext<AppDbContext>(options =>
@@ -17,17 +13,14 @@ internal static class DatabaseSetup
                     ?? $"Data Source={Path.Combine(DataDir.Get(configuration), "app.db")}"
             )
         );
-        if (migrateOnStartup)
-        {
-            services.AddHostedService<MigrationService>();
-        }
+        services.AddHostedService<MigrationService>();
 
         return services;
     }
 }
 
 /// <summary>Migrates on startup (single instance). A hosted service rather than code before app.Run, so tools
-/// that build the host without running it (OpenAPI generation) don't touch the database. StartingAsync runs
+/// that build the host without running it (OpenAPI generation, DevSeed) don't touch the database. StartingAsync runs
 /// before the server starts listening. A failed backup stops startup before anything is migrated.</summary>
 internal sealed class MigrationService(
     IServiceScopeFactory scopeFactory,

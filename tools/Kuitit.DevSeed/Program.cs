@@ -14,7 +14,10 @@ var authority =
 var user = new UserIdentity(authority, SampleReceipts.Subject, "dev@example.com", "Dev");
 
 builder.Services.AddSingleton<ICurrentUser>(new SeedUser(user));
-builder.Services.AddAppDatabase(builder.Configuration, migrateOnStartup: false);
+
+// MigrationService needs it to resolve, though the host is never started.
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddAppDatabase(builder.Configuration);
 builder.Services.AddSingleton<IFileStore>(sp => new LocalFileStore(
     Path.Combine(DataDir.Get(sp.GetRequiredService<IConfiguration>()), "files")
 ));

@@ -45,7 +45,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 builder.AddAppTelemetry();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAppAuth(builder.Configuration);
-builder.Services.AddAppDatabase(builder.Configuration, migrateOnStartup: !isGeneratingOpenApi);
+builder.Services.AddAppDatabase(builder.Configuration);
 if (!isGeneratingOpenApi)
 {
     builder.Services.AddHostedService<TrashPurger>();
